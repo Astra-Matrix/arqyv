@@ -1,34 +1,10 @@
 "use client";
 
-import { Download, ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Zap } from "lucide-react";
 import GitHubIcon from "./GitHubIcon";
+import { OSDownloadButton } from "./OSDownloadButton";
 
 const GITHUB_URL = "https://github.com/ALaustrup/arqyv";
-const RELEASE_URL = "https://github.com/ALaustrup/arqyv/releases/latest";
-
-const PLATFORMS = [
-  {
-    os: "Windows",
-    icon: "⊞",
-    file: "arqyv-windows.zip",
-    href: "https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-windows.zip",
-    note: "Windows 10/11 · 64-bit",
-  },
-  {
-    os: "macOS",
-    icon: "",
-    file: "arqyv-macos.zip",
-    href: "https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-macos.zip",
-    note: "macOS 12+ · Intel & Apple Silicon",
-  },
-  {
-    os: "Linux",
-    icon: "🐧",
-    file: "arqyv-linux.zip",
-    href: "https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-linux.zip",
-    note: "Ubuntu 22.04+ · Debian",
-  },
-];
 
 export default function Hero() {
   return (
@@ -71,17 +47,10 @@ export default function Hero() {
 
         {/* Primary CTAs */}
         <div
-          className="flex flex-col sm:flex-row gap-4 mb-14 animate-fade-up"
+          className="flex flex-col sm:flex-row items-center gap-4 mb-8 animate-fade-up"
           style={{ animationDelay: "0.3s" }}
         >
-          <a
-            href="#download"
-            className="flex items-center gap-2.5 bg-[#00b4d8] hover:bg-[#48cae4] text-[#1a1a2e] font-bold px-8 py-3.5 rounded-xl text-base transition-all animate-pulse-glow hover:scale-105"
-          >
-            <Download size={18} />
-            Download Free
-            <ArrowRight size={16} />
-          </a>
+          <OSDownloadButton size="lg" />
           <a
             href={GITHUB_URL}
             target="_blank"
@@ -93,27 +62,14 @@ export default function Hero() {
           </a>
         </div>
 
-        {/* Platform download pills */}
+        {/* Scroll-to-downloads link */}
         <div
-          className="flex flex-wrap justify-center gap-3 animate-fade-up"
+          className="flex items-center gap-2 text-sm text-[#9e9e9e] hover:text-[#00b4d8] transition-colors cursor-pointer animate-fade-up mb-6"
           style={{ animationDelay: "0.4s" }}
+          onClick={() => document.getElementById("download")?.scrollIntoView({ behavior: "smooth" })}
         >
-          {PLATFORMS.map((p) => (
-            <a
-              key={p.os}
-              href={p.href}
-              className="group flex items-center gap-2.5 bg-[#16213e] hover:bg-[#0f3460] border border-[#2a2a4a] hover:border-[#00b4d8]/40 rounded-lg px-4 py-2.5 text-sm transition-all"
-            >
-              <span className="text-base">{p.icon}</span>
-              <div className="text-left">
-                <div className="font-medium text-[#e0e0e0] group-hover:text-[#00b4d8] transition-colors leading-none">
-                  {p.os}
-                </div>
-                <div className="text-[11px] text-[#9e9e9e] mt-0.5">{p.note}</div>
-              </div>
-              <Download size={13} className="text-[#9e9e9e] group-hover:text-[#00b4d8] transition-colors ml-1" />
-            </a>
-          ))}
+          <ArrowRight size={14} />
+          See all platforms &amp; install instructions
         </div>
 
         {/* Social proof */}

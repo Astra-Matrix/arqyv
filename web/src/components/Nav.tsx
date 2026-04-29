@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Download, Menu, X } from "lucide-react";
 import GitHubIcon from "./GitHubIcon";
+import { OSDownloadButton } from "./OSDownloadButton";
 
 const GITHUB_URL = "https://github.com/ALaustrup/arqyv";
 const RELEASE_URL = "https://github.com/ALaustrup/arqyv/releases/latest";
@@ -65,15 +66,7 @@ export default function Nav() {
             <GitHubIcon size={16} />
             GitHub
           </a>
-          <a
-            href={RELEASE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm bg-[#00b4d8] hover:bg-[#48cae4] text-[#1a1a2e] font-semibold px-4 py-1.5 rounded-md transition-all hover:shadow-[0_0_16px_rgba(0,180,216,0.4)]"
-          >
-            <Download size={14} />
-            Download
-          </a>
+          <OSDownloadButton size="sm" />
         </div>
 
         {/* Mobile hamburger */}
@@ -108,14 +101,7 @@ export default function Nav() {
             >
               <GitHubIcon size={15} /> GitHub
             </a>
-            <a
-              href={RELEASE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-sm bg-[#00b4d8] text-[#1a1a2e] font-semibold px-4 py-2 rounded-md flex-1 justify-center"
-            >
-              <Download size={14} /> Download
-            </a>
+            <OSDownloadButton size="sm" className="flex-1 justify-center" />
           </div>
         </div>
       )}
