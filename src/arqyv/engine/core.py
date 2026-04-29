@@ -87,7 +87,7 @@ class ARQYVMediaEngine(QObject):
                 qp.durationChanged.connect(self._on_qt_duration)
                 qp.errorOccurred.connect(self._on_qt_error)
                 qp.mediaStatusChanged.connect(self._on_qt_media_status)
-            log.info("ARQYVMediaEngine ready — backend: %s", type(self._backend).__name__)
+            log.info("ARQYVMediaEngine ready - backend: %s", type(self._backend).__name__)
         except Exception:
             log.exception("Media backend failed to initialize.")
 
