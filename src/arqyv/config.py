@@ -101,6 +101,10 @@ class AppConfig(BaseSettings):
     enable_voice_search: bool = Field(default=True)
     enable_cloud_sync: bool = Field(default=False)
     enable_auto_index: bool = Field(default=True)
+    enable_api_server: bool = Field(default=True, description="Start the local REST/WebSocket API at localhost:8765.")
+
+    # ── API server ─────────────────────────────────────────────────────────
+    api_port: int = Field(default=8765, description="Port for the local API server.")
 
     # ── Sub-configs ────────────────────────────────────────────────────────
     db: DatabaseConfig = Field(default_factory=DatabaseConfig)

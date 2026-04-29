@@ -96,8 +96,45 @@ class Application:
         window.show()
         self._services["main_window"] = window
 
+        # Start the local API server after the window is open so services
+        # (including main_window itself) are fully registered in self._services.
+        if self.config.enable_api_server:
+            self._start_api_server()
+
+    def _start_api_server(self) -> None:
+        from arqyv.api.server import APIServer
+        api = APIServer(services=self._services, port=self.config.api_port)
+        api.start()
+        self._services["api"] = api
+
+        # Wire EventBus -> WebSocket push
+        import asyncio as _asyncio
+        import threading
+        # The uvicorn event loop runs in the daemon thread; grab it after a brief wait.
+        def _attach_bridge() -> None:
+            import time
+            time.sleep(0.5)  # let uvicorn start its loop
+            # Find the loop from the running uvicorn server
+            server = api._server
+            if server and hasattr(server, "started"):
+                try:
+                    loop = server.config.loop  # type: ignore[attr-defined]
+                except Exception:
+                    loop = None
+                if loop is None:
+                    # Fallback: create a fresh reference loop is inaccessible
+                    return
+                from arqyv.api.bridge import WebSocketBridge
+                self._services["ws_bridge"] = WebSocketBridge(self.events, loop)
+                log.info("WebSocket event bridge attached.")
+
+        threading.Thread(target=_attach_bridge, name="ws-bridge-attach", daemon=True).start()
+        log.info("ARQYV API server launched at http://127.0.0.1:%d", self.config.api_port)
+
     def _on_quit(self) -> None:
         log.info("Shutting down…")
+        if "api" in self._services:
+            self._services["api"].stop()
         if "indexer" in self._services:
             self._services["indexer"].stop_watcher()
         if "db" in self._services:
