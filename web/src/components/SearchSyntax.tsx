@@ -1,110 +1,94 @@
+"use client";
+
 const TOKENS = [
-  { token: "type:", example: "type:video", desc: "Filter by media type group", values: "video · audio · image · document" },
-  { token: "ext:", example: "ext:.flac", desc: "Exact file extension match", values: ".mp4 · .mkv · .flac · .pdf …" },
-  { token: "size:", example: "size:>50mb", desc: "File size comparison", values: ">500mb · <1gb · 10mb" },
-  { token: "date:", example: "date:>2024-01", desc: "Modification date filter", values: ">2024 · <2023-06 · 2024-01-15" },
-  { token: "tag:", example: "tag:vacation", desc: "AI-generated tag contains", values: "any AI-extracted keyword" },
+  { token: "type:",  example: "type:video",    desc: "Filter by media type",   values: "video · audio · image · document" },
+  { token: "ext:",   example: "ext:.flac",     desc: "Exact file extension",   values: ".mp4 · .mkv · .flac · .pdf …" },
+  { token: "size:",  example: "size:>50mb",    desc: "File size comparison",   values: ">500mb · <1gb · 10mb" },
+  { token: "date:",  example: "date:>2024-01", desc: "Modification date",      values: ">2024 · <2023-06 · 2024-01-15" },
+  { token: "tag:",   example: "tag:vacation",  desc: "AI-generated tag",       values: "any AI-extracted keyword" },
 ];
 
 const EXAMPLES = [
-  { query: "beach sunset type:video date:>2024", note: "Semantic search + type + date" },
-  { query: "holiday portrait type:image tag:family", note: "Semantic + type + AI tag" },
-  { query: "interview ext:.mp4 date:>2023-06", note: "Extension + date range" },
-  { query: "meeting notes type:document size:<10mb", note: "Document search with size cap" },
-  { query: "lo-fi chill music ext:.flac", note: "Semantic audio search" },
-  { query: "type:video size:>1gb", note: "Find all large videos" },
+  "beach sunset type:video date:>2024",
+  "holiday portrait type:image tag:family",
+  "interview ext:.mp4 date:>2023-06",
+  "meeting notes type:document size:<10mb",
+  "lo-fi chill music ext:.flac",
+  "type:video size:>1gb",
 ];
 
 export default function SearchSyntax() {
   return (
-    <section className="py-24 px-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#00b4d8] uppercase tracking-widest mb-4">
-            Intelligent search
-          </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-[#e0e0e0] mb-5">
-            Search like you think.
-          </h2>
-          <p className="text-[#9e9e9e] text-lg max-w-2xl mx-auto">
-            Type natural language queries and combine them with precise filter
-            tokens. ARQYV understands meaning, not just filenames.
-          </p>
-        </div>
+    <section className="section-sm relative">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* Token table */}
+          {/* Left */}
           <div>
-            <h3 className="text-sm font-semibold text-[#e0e0e0] uppercase tracking-widest mb-5">
-              Filter Tokens
-            </h3>
-            <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-widest text-[#00d2ff] mb-6"
+                 style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}>
+              Search syntax
+            </div>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-5">
+              Search like<br />
+              <span className="text-white/25">you think.</span>
+            </h2>
+            <p className="text-white/40 text-lg leading-relaxed mb-10">
+              Type natural language and combine with precise filter tokens.
+              ARQYV understands meaning, not just filenames.
+            </p>
+
+            {/* Token table */}
+            <div className="space-y-2">
               {TOKENS.map((t) => (
-                <div
-                  key={t.token}
-                  className="bg-[#16213e] border border-[#2a2a4a] rounded-xl p-4 hover:border-[#00b4d8]/30 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <code className="text-[#00b4d8] font-mono text-sm bg-[#00b4d8]/10 px-2 py-0.5 rounded">
-                        {t.example}
-                      </code>
-                      <p className="text-[#9e9e9e] text-sm mt-2">{t.desc}</p>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <span className="font-mono text-xs text-[#2a2a4a] bg-[#0f3460] rounded px-2 py-1">
-                        {t.token}*
-                      </span>
-                    </div>
+                <div key={t.token}
+                     className="flex items-start gap-4 px-4 py-3 rounded-xl transition-colors hover:bg-white/[0.02]"
+                     style={{ border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <code className="text-[#00d2ff] font-mono text-sm shrink-0 w-28">{t.example}</code>
+                  <div>
+                    <div className="text-sm text-white/60">{t.desc}</div>
+                    <div className="text-[10px] text-white/20 font-mono mt-0.5">{t.values}</div>
                   </div>
-                  <p className="text-xs text-[#9e9e9e]/60 mt-2 font-mono">{t.values}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Example queries */}
-          <div>
-            <h3 className="text-sm font-semibold text-[#e0e0e0] uppercase tracking-widest mb-5">
-              Example Queries
-            </h3>
-            <div className="space-y-3">
-              {EXAMPLES.map((e) => (
-                <div
-                  key={e.query}
-                  className="bg-[#16213e] border border-[#2a2a4a] rounded-xl p-4 group hover:border-[#00b4d8]/30 transition-colors"
-                >
-                  <div className="font-mono text-sm text-[#e0e0e0] group-hover:text-[#00b4d8] transition-colors">
-                    {e.query.split(" ").map((word, i) => {
-                      const isToken = word.includes(":");
-                      return (
-                        <span key={i}>
-                          {i > 0 && " "}
-                          {isToken ? (
-                            <span className="text-[#00b4d8]">{word}</span>
-                          ) : (
-                            <span className="text-[#e0e0e0]">{word}</span>
-                          )}
-                        </span>
-                      );
-                    })}
-                  </div>
-                  <p className="text-xs text-[#9e9e9e] mt-2">{e.note}</p>
-                </div>
-              ))}
+          {/* Right: example queries */}
+          <div className="space-y-3">
+            <div className="text-xs font-semibold text-white/20 uppercase tracking-widest mb-4">
+              Example queries
             </div>
-
-            {/* Search box demo */}
-            <div className="mt-6 bg-[#0f3460]/40 border border-[#00b4d8]/20 rounded-xl p-4">
-              <p className="text-xs text-[#9e9e9e] mb-3 uppercase tracking-widest">Try it in the app</p>
-              <div className="bg-[#1a1a2e] border border-[#2a2a4a] rounded-lg px-4 py-3 flex items-center gap-3">
-                <span className="text-[#9e9e9e] text-sm">🔍</span>
-                <span className="font-mono text-sm text-[#00b4d8] flex-1">
-                  beach vacation type:video date:&gt;2023
-                </span>
-                <span className="text-[10px] text-[#9e9e9e] whitespace-nowrap">↵ Enter</span>
+            {EXAMPLES.map((q) => (
+              <div key={q}
+                   className="group px-4 py-3 rounded-xl font-mono text-sm transition-all cursor-default"
+                   style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}
+                   onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,210,255,0.15)"; }}
+                   onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.04)"; }}>
+                {q.split(" ").map((word, i) => (
+                  <span key={i}>
+                    {i > 0 && " "}
+                    {word.includes(":") ? (
+                      <span className="text-[#00d2ff]">{word}</span>
+                    ) : (
+                      <span className="text-white/50">{word}</span>
+                    )}
+                  </span>
+                ))}
               </div>
-              <p className="text-xs text-[#9e9e9e] mt-2">
+            ))}
+
+            {/* Live query box */}
+            <div className="mt-8 p-5 rounded-2xl"
+                 style={{ background: "rgba(0,210,255,0.03)", border: "1px solid rgba(0,210,255,0.1)" }}>
+              <div className="text-xs text-white/20 uppercase tracking-widest mb-3">Try it in the app</div>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg font-mono text-sm"
+                   style={{ background: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span className="text-white/20">›</span>
+                <span className="text-[#00d2ff]">beach vacation <span className="text-white/25">type:video date:&gt;2023</span></span>
+                <span className="ml-auto w-[2px] h-4 bg-[#00d2ff] animate-pulse rounded-full" />
+              </div>
+              <p className="text-xs text-white/25 mt-3">
                 Or press the mic button to speak your query — Whisper transcribes it locally.
               </p>
             </div>

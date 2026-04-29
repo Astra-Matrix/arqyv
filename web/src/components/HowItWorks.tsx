@@ -1,78 +1,72 @@
+"use client";
+
 const STEPS = [
-  {
-    n: "01",
-    title: "Open a Folder",
-    desc: "Point ARQYV at any folder — local drive, external disk, or mounted cloud storage. The indexer scans in the background without blocking the UI.",
-  },
-  {
-    n: "02",
-    title: "AI Analyzes Every File",
-    desc: "Videos → Whisper transcription. Images → BLIP captioning. Documents → text extraction. Audio → tag parsing. spaCy extracts keywords and entities.",
-  },
-  {
-    n: "03",
-    title: "Vectors Stored Locally",
-    desc: "sentence-transformers embeds everything into 384-dimensional vectors. ChromaDB stores them locally. All semantic search runs offline, in milliseconds.",
-  },
-  {
-    n: "04",
-    title: "Search by Meaning",
-    desc: "Type 'beach vacation type:video' and get results ranked by semantic relevance, not just filename. Combine natural language with filter tokens.",
-  },
-  {
-    n: "05",
-    title: "Play Anything",
-    desc: "Click a file. ARQYVMediaEngine detects the format via magic bytes, loads the right codec tier, auto-loads subtitles, and resumes from last position.",
-  },
-  {
-    n: "06",
-    title: "Share in Seconds",
-    desc: "Select a file, click Share. A QR code appears. Scan it on your phone — the download starts. No upload, no cloud, no account. Pure LAN.",
-  },
+  { n: "01", title: "Open a folder",       desc: "Point ARQYV at any folder — local drive, external disk, or mounted cloud. Background indexer starts immediately, UI stays responsive." },
+  { n: "02", title: "AI reads everything", desc: "Videos → Whisper transcription. Images → BLIP captioning. Documents → text extraction. spaCy extracts keywords and entities." },
+  { n: "03", title: "Vectors stored locally", desc: "sentence-transformers embeds into 384-dim vectors. ChromaDB stores them. All semantic search runs offline in under 100ms." },
+  { n: "04", title: "Search by meaning",   desc: "Type 'beach vacation type:video' and get results ranked by semantic relevance, not just filename. Natural language meets precise filters." },
+  { n: "05", title: "Play anything",       desc: "Click a file. Magic-byte format detection, codec tier selection, subtitle auto-load, and position resume — all automatic." },
+  { n: "06", title: "Share instantly",     desc: "Select a file, click Share. QR code appears. Scan from any device on the same network — download starts. No upload, no cloud." },
 ];
 
 export default function HowItWorks() {
   return (
-    <section className="py-24 px-6 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#16213e]/30 to-transparent pointer-events-none" />
+    <section className="section-sm relative">
+      {/* Gradient divider */}
+      <div className="absolute inset-x-0 top-0 h-px"
+           style={{ background: "linear-gradient(to right, transparent, rgba(0,210,255,0.15), transparent)" }} />
 
-      <div className="relative max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#00b4d8] uppercase tracking-widest mb-4">
-            The pipeline
-          </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-[#e0e0e0] mb-5">
-            How ARQYV works
-          </h2>
-          <p className="text-[#9e9e9e] text-lg max-w-xl mx-auto">
-            Every step happens locally, automatically, without you thinking about it.
-          </p>
-        </div>
+      <div className="max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
 
-        <div className="relative">
-          {/* Connector line */}
-          <div className="absolute left-[27px] top-10 bottom-10 w-px bg-gradient-to-b from-[#00b4d8]/60 via-[#00b4d8]/20 to-transparent hidden md:block" />
+          {/* Left: heading */}
+          <div className="lg:sticky lg:top-32">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-widest text-[#00d2ff] mb-6"
+                 style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}>
+              The pipeline
+            </div>
+            <h2 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-tight mb-6">
+              How ARQYV<br />
+              <span className="text-white/25">works.</span>
+            </h2>
+            <p className="text-white/40 text-lg leading-relaxed">
+              Every step happens locally, automatically, without you thinking about it.
+            </p>
+          </div>
 
-          <div className="space-y-6">
-            {STEPS.map((step, i) => (
-              <div key={step.n} className="flex gap-6 group">
-                {/* Number badge */}
-                <div className="relative shrink-0">
-                  <div className="w-14 h-14 rounded-2xl bg-[#0f3460] border border-[#2a2a4a] group-hover:border-[#00b4d8]/50 flex items-center justify-center font-mono text-sm font-bold text-[#00b4d8] transition-colors group-hover:bg-[#00b4d8]/10 z-10 relative">
-                    {step.n}
-                  </div>
+          {/* Right: steps */}
+          <div className="space-y-3">
+            {STEPS.map((step) => (
+              <div
+                key={step.n}
+                className="group flex gap-5 p-5 rounded-2xl transition-all hover:bg-white/[0.02] cursor-default"
+                style={{ border: "1px solid transparent" }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,210,255,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.borderColor = "transparent";
+                }}
+              >
+                <div
+                  className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-mono text-xs font-bold text-[#00d2ff] mt-0.5 transition-all group-hover:scale-110"
+                  style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}
+                >
+                  {step.n}
                 </div>
-
-                {/* Content */}
-                <div className="flex-1 bg-[#16213e] border border-[#2a2a4a] group-hover:border-[#00b4d8]/20 rounded-2xl p-5 transition-all">
-                  <h3 className="font-semibold text-[#e0e0e0] mb-2">{step.title}</h3>
-                  <p className="text-[#9e9e9e] text-sm leading-relaxed">{step.desc}</p>
+                <div>
+                  <h3 className="font-semibold text-white/90 mb-1.5">{step.title}</h3>
+                  <p className="text-white/35 text-sm leading-relaxed">{step.desc}</p>
                 </div>
               </div>
             ))}
           </div>
         </div>
       </div>
+
+      {/* Gradient divider */}
+      <div className="absolute inset-x-0 bottom-0 h-px"
+           style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.04), transparent)" }} />
     </section>
   );
 }

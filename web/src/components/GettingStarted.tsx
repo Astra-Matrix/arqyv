@@ -1,207 +1,173 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Terminal, Package, Play } from "lucide-react";
+import { Copy, Check } from "lucide-react";
 
 function CodeBlock({ code, lang = "bash" }: { code: string; lang?: string }) {
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
-    await navigator.clipboard.writeText(code);
+    await navigator.clipboard.writeText(code.trim());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="relative group rounded-xl bg-[#0f3460]/60 border border-[#2a2a4a] overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-[#2a2a4a] bg-[#0f3460]/40">
-        <span className="text-[10px] text-[#9e9e9e] uppercase tracking-widest font-mono">{lang}</span>
+    <div className="group relative rounded-xl overflow-hidden"
+         style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(255,255,255,0.07)" }}>
+      <div className="flex items-center justify-between px-4 py-2.5"
+           style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <span className="text-[10px] font-mono font-semibold uppercase tracking-widest text-white/20">{lang}</span>
         <button
           onClick={copy}
-          className="flex items-center gap-1.5 text-xs text-[#9e9e9e] hover:text-[#00b4d8] transition-colors opacity-0 group-hover:opacity-100"
+          className="flex items-center gap-1.5 text-xs text-white/20 hover:text-white/60 transition-colors opacity-0 group-hover:opacity-100"
         >
-          {copied ? <Check size={12} className="text-[#4caf50]" /> : <Copy size={12} />}
-          {copied ? "Copied" : "Copy"}
+          {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
+          {copied ? "Copied!" : "Copy"}
         </button>
       </div>
-      <pre className="p-4 text-sm text-[#e0e0e0] font-mono overflow-x-auto leading-relaxed whitespace-pre">
-        {code}
+      <pre className="p-4 text-sm text-white/70 font-mono overflow-x-auto leading-relaxed whitespace-pre">
+        {code.trim()}
       </pre>
     </div>
   );
 }
 
 const TABS = [
-  { id: "binary", label: "Binary (Recommended)", icon: Package },
-  { id: "source", label: "From Source", icon: Terminal },
-  { id: "run", label: "Running the App", icon: Play },
+  { id: "binary", label: "Binary" },
+  { id: "source", label: "From Source" },
+  { id: "run",    label: "Running" },
 ];
 
-const CONTENT: Record<string, React.ReactNode> = {
-  binary: (
-    <div className="space-y-6">
-      <p className="text-[#9e9e9e] text-sm leading-relaxed">
-        Download the pre-built executable for your platform. No Python, no
-        dependencies — just unzip and run.
-      </p>
-      <div className="space-y-4">
-        <h4 className="text-sm font-semibold text-[#e0e0e0]">Windows</h4>
-        <CodeBlock lang="powershell" code={`# Download and extract
-Invoke-WebRequest -Uri "https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-windows.zip" -OutFile arqyv.zip
-Expand-Archive arqyv.zip -DestinationPath .
-# Launch
-.\\ARQYV\\ARQYV.exe`} />
-
-        <h4 className="text-sm font-semibold text-[#e0e0e0]">macOS</h4>
-        <CodeBlock lang="bash" code={`curl -L https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-macos.zip -o arqyv.zip
-unzip arqyv.zip
-open ARQYV.app`} />
-
-        <h4 className="text-sm font-semibold text-[#e0e0e0]">Linux</h4>
-        <CodeBlock lang="bash" code={`wget https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-linux.zip
-unzip arqyv-linux.zip
-chmod +x ARQYV/ARQYV
-./ARQYV/ARQYV`} />
-      </div>
-    </div>
-  ),
-
-  source: (
-    <div className="space-y-5">
-      <p className="text-[#9e9e9e] text-sm leading-relaxed">
-        Run from source for development or if you want to modify ARQYV.
-        Requires Python 3.11+.
-      </p>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">1. Clone the repository</h4>
-        <CodeBlock code={`git clone https://github.com/ALaustrup/arqyv.git
-cd arqyv`} />
-      </div>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">2. Create a virtual environment</h4>
-        <CodeBlock code={`python -m venv .venv
-
-# Windows
-.venv\\Scripts\\activate
-
-# macOS / Linux
-source .venv/bin/activate`} />
-      </div>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">3. Install dependencies</h4>
-        <CodeBlock code={`pip install -e .
-
-# Download the spaCy NLP model (for AI tagging)
-python -m spacy download en_core_web_sm`} />
-      </div>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">4. Configure (optional)</h4>
-        <CodeBlock code={`cp .env.example .env
-# Edit .env to configure cloud credentials, AI model sizes, etc.`} />
-      </div>
-    </div>
-  ),
-
-  run: (
-    <div className="space-y-5">
-      <p className="text-[#9e9e9e] text-sm leading-relaxed">
-        Launch ARQYV with optional flags. All settings persist between sessions.
-      </p>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">Normal launch</h4>
-        <CodeBlock code={`arqyv
-# or
-python -m arqyv`} />
-      </div>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">Debug mode (verbose logging)</h4>
-        <CodeBlock code={`arqyv --debug`} />
-      </div>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">Custom data directory</h4>
-        <CodeBlock code={`arqyv --data-dir /mnt/external/arqyv-data`} />
-      </div>
-
-      <div>
-        <h4 className="text-sm font-semibold text-[#e0e0e0] mb-2">Environment variables</h4>
-        <CodeBlock lang="bash" code={`# Disable AI pipeline for faster startup
-ARQYV_ENABLE_AI=false arqyv
-
-# Use a specific GPU device
-ARQYV_AI_DEVICE=cuda arqyv
-
-# Disable the local API server
-ARQYV_ENABLE_API_SERVER=false arqyv`} />
-      </div>
-
-      <div className="rounded-xl bg-[#00b4d8]/8 border border-[#00b4d8]/20 p-4">
-        <p className="text-sm text-[#e0e0e0]">
-          <span className="text-[#00b4d8] font-semibold">First run:</span>{" "}
-          ARQYV auto-creates its database and data directories. Open a folder
-          via{" "}
-          <kbd className="bg-[#0f3460] border border-[#2a2a4a] rounded px-1.5 py-0.5 text-xs font-mono">
-            File → Open Folder
-          </kbd>{" "}
-          and the indexer will start cataloguing your files in the background.
-        </p>
-      </div>
-    </div>
-  ),
-};
-
 export default function GettingStarted() {
-  const [activeTab, setActiveTab] = useState("binary");
+  const [tab, setTab] = useState("binary");
 
   return (
-    <section id="docs" className="py-32 px-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <section id="docs" className="section relative">
+      <div className="absolute inset-x-0 top-0 h-px"
+           style={{ background: "linear-gradient(to right, transparent, rgba(0,210,255,0.1), transparent)" }} />
+
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-16">
-          <p className="text-sm font-medium text-[#00b4d8] uppercase tracking-widest mb-4">
-            Getting started
-          </p>
-          <h2 className="text-4xl md:text-5xl font-bold text-[#e0e0e0] mb-5">
-            Up and running in minutes.
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-widest text-[#00d2ff] mb-6"
+               style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}>
+            Documentation
+          </div>
+          <h2 className="text-5xl md:text-6xl font-black tracking-tight text-white mb-5">
+            Up and running<br /><span className="text-white/25">in minutes.</span>
           </h2>
-          <p className="text-[#9e9e9e] text-lg max-w-xl mx-auto">
-            Choose your installation method below. The binary is the easiest;
-            source gives you the full development setup.
-          </p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Tabs */}
-          <div className="lg:col-span-3 flex flex-row lg:flex-col gap-2">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const active = tab.id === activeTab;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm text-left transition-all w-full ${
-                    active
-                      ? "bg-[#00b4d8]/15 border border-[#00b4d8]/30 text-[#00b4d8] font-medium"
-                      : "text-[#9e9e9e] hover:text-[#e0e0e0] hover:bg-[#16213e] border border-transparent"
-                  }`}
-                >
-                  <Icon size={15} />
-                  <span className="hidden sm:inline">{tab.label}</span>
-                </button>
-              );
-            })}
+          {/* Tab selector */}
+          <div className="lg:col-span-3 flex lg:flex-col gap-2">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`text-sm text-left px-4 py-3 rounded-xl transition-all ${
+                  tab === t.id
+                    ? "text-[#00d2ff] font-medium"
+                    : "text-white/35 hover:text-white/60"
+                }`}
+                style={{
+                  background: tab === t.id ? "rgba(0,210,255,0.06)" : "transparent",
+                  border: tab === t.id ? "1px solid rgba(0,210,255,0.15)" : "1px solid transparent",
+                }}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
 
           {/* Content */}
-          <div className="lg:col-span-9 bg-[#16213e] border border-[#2a2a4a] rounded-2xl p-6 lg:p-8 min-h-[400px]">
-            {CONTENT[activeTab]}
+          <div className="lg:col-span-9 rounded-2xl p-8 min-h-[440px] space-y-7"
+               style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+
+            {tab === "binary" && (
+              <>
+                <p className="text-white/40 text-sm">
+                  Download the pre-built executable — no Python, no dependencies. Unzip and run.
+                </p>
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">Windows</h4>
+                    <CodeBlock lang="powershell" code={`Invoke-WebRequest -Uri "https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-windows.zip" -OutFile arqyv.zip
+Expand-Archive arqyv.zip .
+.\\ARQYV\\ARQYV.exe`} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">macOS</h4>
+                    <CodeBlock code={`curl -L https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-macos.zip -o arqyv.zip
+unzip arqyv.zip && open ARQYV.app`} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">Linux</h4>
+                    <CodeBlock code={`wget https://github.com/ALaustrup/arqyv/releases/latest/download/arqyv-linux.zip
+unzip arqyv-linux.zip && chmod +x ARQYV/ARQYV && ./ARQYV/ARQYV`} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {tab === "source" && (
+              <>
+                <p className="text-white/40 text-sm">Requires Python 3.11+. Full dev setup in four steps.</p>
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">1 — Clone</h4>
+                    <CodeBlock code={`git clone https://github.com/ALaustrup/arqyv.git
+cd arqyv`} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">2 — Virtual environment</h4>
+                    <CodeBlock code={`python -m venv .venv
+# Windows:  .venv\\Scripts\\activate
+# mac/Linux: source .venv/bin/activate`} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">3 — Install</h4>
+                    <CodeBlock code={`pip install -e .
+python -m spacy download en_core_web_sm`} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">4 — Configure (optional)</h4>
+                    <CodeBlock code={`cp .env.example .env
+# Edit .env — cloud credentials, AI model sizes, API port…`} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {tab === "run" && (
+              <>
+                <p className="text-white/40 text-sm">Launch options and environment variables.</p>
+                <div className="space-y-5">
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">Launch</h4>
+                    <CodeBlock code={`arqyv          # normal
+arqyv --debug  # verbose logging
+python -m arqyv --data-dir /path/to/data`} />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-white/60 mb-2.5 uppercase tracking-widest">Environment flags</h4>
+                    <CodeBlock lang="bash" code={`ARQYV_ENABLE_AI=false arqyv           # faster startup
+ARQYV_AI_DEVICE=cuda arqyv            # GPU inference
+ARQYV_ENABLE_API_SERVER=false arqyv   # disable REST/WS API
+ARQYV_API_PORT=9000 arqyv             # custom port`} />
+                  </div>
+                  <div className="px-4 py-3 rounded-xl text-sm text-white/60"
+                       style={{ background: "rgba(0,210,255,0.05)", border: "1px solid rgba(0,210,255,0.12)" }}>
+                    <span className="text-[#00d2ff] font-semibold">First run:</span>{" "}
+                    Open a folder via{" "}
+                    <kbd className="px-1.5 py-0.5 rounded text-xs font-mono bg-white/[0.06] border border-white/[0.08]">
+                      File → Open Folder
+                    </kbd>{" "}
+                    and indexing starts automatically in the background.
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

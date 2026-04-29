@@ -83,79 +83,60 @@ export function OSDownloadButton({
     PLATFORMS.find((p) => p.os === os) ?? PLATFORMS[0];
   const others = PLATFORMS.filter((p) => p.os !== primary.os);
 
-  const sizeCls = {
-    sm: "px-4 py-1.5 text-sm gap-2",
-    md: "px-6 py-2.5 text-sm gap-2",
-    lg: "px-8 py-3.5 text-base gap-2.5",
+  const sizePad = {
+    sm: { main: "px-4 py-2 text-sm gap-2",       chevron: "px-2.5", icon: 14 },
+    md: { main: "px-5 py-2.5 text-sm gap-2",     chevron: "px-2.5", icon: 15 },
+    lg: { main: "px-7 py-3.5 text-base gap-2.5", chevron: "px-3",   icon: 18 },
   }[size];
 
   return (
     <div className={`relative inline-flex ${className}`}>
-      {/* Primary download */}
+      {/* Primary */}
       <a
         href={primary.url}
-        className={`flex items-center ${sizeCls} bg-[#00b4d8] hover:bg-[#48cae4] text-[#1a1a2e] font-bold rounded-l-xl transition-all hover:shadow-[0_0_20px_rgba(0,180,216,0.4)]`}
+        className={`btn-accent flex items-center ${sizePad.main} rounded-l-xl`}
         aria-label={primary.label}
       >
-        <Download size={size === "lg" ? 18 : 15} />
+        <Download size={sizePad.icon} />
         <span>{primary.label}</span>
-        <span className="text-[#1a1a2e]/60 font-normal text-xs hidden sm:inline">
-          {primary.ext}
-        </span>
+        <span className="opacity-50 font-normal text-xs hidden sm:inline">{primary.ext}</span>
       </a>
 
-      {/* Chevron dropdown trigger */}
+      {/* Chevron */}
       <button
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         aria-label="Other platforms"
-        className={`flex items-center justify-center ${
-          size === "lg" ? "px-3" : "px-2"
-        } bg-[#00b4d8] hover:bg-[#48cae4] text-[#1a1a2e] font-bold rounded-r-xl border-l border-[#1a1a2e]/20 transition-all`}
+        className={`btn-accent flex items-center justify-center ${sizePad.chevron} rounded-r-xl`}
+        style={{ borderLeft: "1px solid rgba(0,0,0,0.2)" }}
       >
-        <ChevronDown
-          size={14}
-          className={`transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <ChevronDown size={13} className={`transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {/* Dropdown */}
       {open && (
         <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 z-40"
-            onClick={() => setOpen(false)}
-          />
-          <div className="absolute top-full right-0 mt-2 z-50 min-w-[240px] bg-[#16213e] border border-[#2a2a4a] rounded-xl shadow-2xl overflow-hidden">
-            <div className="px-3 py-2 text-[10px] text-[#9e9e9e] uppercase tracking-widest border-b border-[#2a2a4a]">
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute top-full right-0 mt-2 z-50 min-w-[260px] rounded-2xl shadow-2xl overflow-hidden"
+               style={{ background: "#0d0d18", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <div className="px-4 py-2.5 text-[10px] text-white/20 uppercase tracking-widest font-semibold"
+                 style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               Other platforms
             </div>
             {others.map((p) => (
-              <a
-                key={p.os}
-                href={p.url}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-[#0f3460] transition-colors"
-              >
-                <span className="text-lg w-6 text-center">{p.icon}</span>
+              <a key={p.os} href={p.url} onClick={() => setOpen(false)}
+                 className="flex items-center gap-3 px-4 py-3.5 hover:bg-white/[0.03] transition-colors">
+                <span className="text-xl w-7 text-center">{p.icon}</span>
                 <div>
-                  <div className="text-sm font-medium text-[#e0e0e0]">
-                    {p.label}
-                  </div>
-                  <div className="text-[11px] text-[#9e9e9e]">{p.note}</div>
+                  <div className="text-sm font-medium text-white/70">{p.label}</div>
+                  <div className="text-[11px] text-white/25">{p.note}</div>
                 </div>
-                <Download size={13} className="ml-auto text-[#9e9e9e]" />
+                <Download size={12} className="ml-auto text-white/20" />
               </a>
             ))}
-            <div className="border-t border-[#2a2a4a]">
-              <a
-                href={RELEASE_LATEST}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs text-[#9e9e9e] hover:text-[#00b4d8] transition-colors"
-              >
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <a href={RELEASE_LATEST} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)}
+                 className="flex items-center justify-center gap-2 px-4 py-2.5 text-xs text-white/20 hover:text-[#00d2ff] transition-colors">
                 All releases on GitHub →
               </a>
             </div>
@@ -175,52 +156,55 @@ export function PlatformCards() {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {PLATFORMS.map((p) => {
-        const isDetected = p.os === os;
+        const detected = p.os === os;
+        const osLabel = p.os === "macos" ? "macOS" : p.os.charAt(0).toUpperCase() + p.os.slice(1);
         return (
           <div
             key={p.os}
-            className={`relative rounded-2xl border p-6 flex flex-col transition-all hover:-translate-y-1 ${
-              isDetected
-                ? "border-[#00b4d8]/50 bg-gradient-to-br from-[#16213e] to-[#0f3460] shadow-[0_0_40px_rgba(0,180,216,0.12)]"
-                : "border-[#2a2a4a] bg-[#16213e]"
-            }`}
+            className="relative rounded-2xl p-6 flex flex-col transition-all hover:-translate-y-1"
+            style={{
+              background: detected
+                ? "linear-gradient(135deg, rgba(0,210,255,0.06) 0%, rgba(0,0,0,0) 100%), #0d0d18"
+                : "#0d0d18",
+              border: detected
+                ? "1px solid rgba(0,210,255,0.2)"
+                : "1px solid rgba(255,255,255,0.06)",
+              boxShadow: detected ? "0 0 40px rgba(0,210,255,0.07)" : "none",
+            }}
           >
-            {isDetected && (
-              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00b4d8] text-[#1a1a2e] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest whitespace-nowrap">
+            {detected && (
+              <div className="absolute -top-3 left-6 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full"
+                   style={{ background: "#00d2ff", color: "#000" }}>
                 Your Platform
               </div>
             )}
 
-            <div className="text-4xl mb-3">{p.icon}</div>
+            <div className="text-4xl mb-4">{p.icon}</div>
+            <div className="text-xl font-bold text-white mb-1">{osLabel}</div>
+            <div className="text-xs text-white/30 mb-6">{p.note}</div>
 
-            <div className="text-xl font-bold text-[#e0e0e0] mb-1 capitalize">
-              {p.os === "macos" ? "macOS" : p.os.charAt(0).toUpperCase() + p.os.slice(1)}
-            </div>
-            <div className="text-xs text-[#9e9e9e] mb-5">{p.note}</div>
-
-            {/* Install steps */}
-            <div className="flex-1 space-y-2 mb-6">
+            <div className="flex-1 space-y-2.5 mb-6">
               {p.os === "windows" && (
                 <>
-                  <Step n={1}>Download <code className="text-[#00b4d8] font-mono">{p.file}{p.ext}</code></Step>
+                  <Step n={1}>Download <code className="text-[#00d2ff] font-mono">{p.file}{p.ext}</code></Step>
                   <Step n={2}>Extract the ZIP to any folder</Step>
-                  <Step n={3}>Double-click <code className="text-[#00b4d8] font-mono">ARQYV.exe</code></Step>
+                  <Step n={3}>Double-click <code className="text-[#00d2ff] font-mono">ARQYV.exe</code></Step>
                 </>
               )}
               {p.os === "macos" && (
                 <>
-                  <Step n={1}>Download <code className="text-[#00b4d8] font-mono">{p.file}{p.ext}</code></Step>
-                  <Step n={2}>Extract and move <code className="text-[#00b4d8] font-mono">ARQYV.app</code> to Applications</Step>
-                  <Step n={3}>Right-click → Open to bypass Gatekeeper on first launch</Step>
+                  <Step n={1}>Download <code className="text-[#00d2ff] font-mono">{p.file}{p.ext}</code></Step>
+                  <Step n={2}>Move <code className="text-[#00d2ff] font-mono">ARQYV.app</code> to Applications</Step>
+                  <Step n={3}>Right-click → Open to bypass Gatekeeper</Step>
                 </>
               )}
               {p.os === "linux" && (
                 <>
-                  <Step n={1}>Download <code className="text-[#00b4d8] font-mono">{p.file}{p.ext}</code></Step>
-                  <Step n={2}><code className="text-[#00b4d8] font-mono">unzip {p.file}{p.ext}</code></Step>
-                  <Step n={3}><code className="text-[#00b4d8] font-mono">./ARQYV/ARQYV</code></Step>
+                  <Step n={1}>Download <code className="text-[#00d2ff] font-mono">{p.file}{p.ext}</code></Step>
+                  <Step n={2}><code className="text-[#00d2ff] font-mono">unzip {p.file}{p.ext}</code></Step>
+                  <Step n={3}><code className="text-[#00d2ff] font-mono">./ARQYV/ARQYV</code></Step>
                 </>
               )}
             </div>
@@ -228,10 +212,15 @@ export function PlatformCards() {
             <a
               href={p.url}
               className={`flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all ${
-                isDetected
-                  ? "bg-[#00b4d8] hover:bg-[#48cae4] text-[#1a1a2e] hover:shadow-[0_0_20px_rgba(0,180,216,0.4)]"
-                  : "bg-[#0f3460] hover:bg-[#00b4d8] text-[#e0e0e0] hover:text-[#1a1a2e] border border-[#2a2a4a] hover:border-[#00b4d8]"
+                detected ? "btn-accent" : ""
               }`}
+              style={!detected ? {
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.6)",
+              } : {}}
+              onMouseEnter={(e) => { if (!detected) { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)"; }}}
+              onMouseLeave={(e) => { if (!detected) { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; }}}
             >
               <Download size={15} />
               {p.file}{p.ext}

@@ -1,116 +1,113 @@
-import { Download } from "lucide-react";
 import GitHubIcon from "./GitHubIcon";
+import { OSDownloadButton } from "./OSDownloadButton";
 
-const GITHUB_URL = "https://github.com/ALaustrup/arqyv";
+const GITHUB_URL  = "https://github.com/ALaustrup/arqyv";
 const RELEASE_URL = "https://github.com/ALaustrup/arqyv/releases/latest";
 
-const LINKS = [
+const COLS = [
   {
     heading: "Product",
-    items: [
-      { label: "Features", href: "#features" },
-      { label: "Download", href: "#download" },
-      { label: "Documentation", href: "#docs" },
-      { label: "FAQ", href: "#faq" },
+    links: [
+      { label: "Features",       href: "#features" },
+      { label: "Download",       href: "#download" },
+      { label: "Documentation",  href: "#docs" },
+      { label: "FAQ",            href: "#faq" },
     ],
   },
   {
-    heading: "Resources",
-    items: [
-      { label: "GitHub Repository", href: GITHUB_URL, external: true },
-      { label: "All Releases", href: RELEASE_URL, external: true },
-      { label: "Issues & Bugs", href: `${GITHUB_URL}/issues`, external: true },
-      { label: "Roadmap", href: `${GITHUB_URL}#roadmap`, external: true },
+    heading: "Open Source",
+    links: [
+      { label: "GitHub",          href: GITHUB_URL,                              ext: true },
+      { label: "Releases",        href: RELEASE_URL,                             ext: true },
+      { label: "Issues",          href: `${GITHUB_URL}/issues`,                  ext: true },
+      { label: "Contributing",    href: `${GITHUB_URL}/blob/main/README.md`,     ext: true },
     ],
   },
   {
-    heading: "Developers",
-    items: [
-      { label: "Source Code", href: GITHUB_URL, external: true },
-      { label: "API Reference", href: `${GITHUB_URL}#readme`, external: true },
-      { label: "Contributing", href: `${GITHUB_URL}/blob/main/README.md`, external: true },
-      { label: "CI / Actions", href: `${GITHUB_URL}/actions`, external: true },
+    heading: "Developer",
+    links: [
+      { label: "Source Code",    href: GITHUB_URL,                               ext: true },
+      { label: "REST API",       href: `${GITHUB_URL}#readme`,                   ext: true },
+      { label: "CI / Actions",   href: `${GITHUB_URL}/actions`,                  ext: true },
+      { label: "Roadmap",        href: `${GITHUB_URL}#roadmap`,                  ext: true },
     ],
   },
 ];
 
 export default function Footer() {
   return (
-    <footer className="border-t border-[#2a2a4a] bg-[#16213e]/50">
+    <footer>
       {/* CTA strip */}
-      <div className="py-16 px-6 text-center border-b border-[#2a2a4a] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#00b4d8]/5 to-transparent" />
+      <div className="relative overflow-hidden py-24 px-6 text-center"
+           style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        {/* Glow */}
+        <div className="absolute inset-0 pointer-events-none"
+             style={{ background: "radial-gradient(ellipse 60% 80% at 50% 100%, rgba(0,210,255,0.06) 0%, transparent 70%)" }} />
+
         <div className="relative max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-[#e0e0e0] mb-4">
-            Ready to own your data?
+          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-4">
+            Ready to own<br />your data?
           </h2>
-          <p className="text-[#9e9e9e] mb-8">
-            Free. Open source. No accounts. No cloud. Just your files, intelligently organized.
+          <p className="text-white/35 mb-10 text-lg">
+            Free. Open source. No accounts. No cloud.<br />Just your files, intelligently organized.
           </p>
-          <div className="flex justify-center gap-4 flex-wrap">
-            <a
-              href={RELEASE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-[#00b4d8] hover:bg-[#48cae4] text-[#1a1a2e] font-bold px-8 py-3 rounded-xl text-sm transition-all hover:shadow-[0_0_20px_rgba(0,180,216,0.4)]"
-            >
-              <Download size={16} />
-              Download ARQYV — It&apos;s Free
-            </a>
+          <div className="flex justify-center items-center gap-4 flex-wrap">
+            <OSDownloadButton size="lg" />
             <a
               href={GITHUB_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 border border-[#2a2a4a] text-[#9e9e9e] hover:text-[#00b4d8] hover:border-[#00b4d8]/40 px-8 py-3 rounded-xl text-sm transition-all"
+              className="flex items-center gap-2 text-sm text-white/40 hover:text-white/70 px-6 py-3.5 rounded-xl transition-all"
+              style={{ border: "1px solid rgba(255,255,255,0.07)" }}
             >
-              <GitHubIcon size={16} />
-              View Source
+              <GitHubIcon size={15} /> View Source
             </a>
           </div>
         </div>
       </div>
 
-      {/* Links */}
-      <div className="max-w-7xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
-        {/* Brand */}
+      {/* Links grid */}
+      <div className="max-w-6xl mx-auto px-6 py-16 grid grid-cols-2 md:grid-cols-4 gap-12"
+           style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+
+        {/* Brand col */}
         <div className="col-span-2 md:col-span-1">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded-lg bg-[#00b4d8] flex items-center justify-center font-bold text-[#1a1a2e] text-sm">
-              AQ
+          <div className="flex items-center gap-2 mb-5">
+            <div className="relative w-7 h-7 rounded-lg bg-gradient-to-br from-[#00d2ff] to-[#0ea5e9] flex items-center justify-center">
+              <span className="text-[10px] font-black text-black">AQ</span>
             </div>
-            <span className="font-semibold text-[#e0e0e0] text-lg">ARQYV</span>
+            <span className="font-semibold text-white/70">ARQYV</span>
           </div>
-          <p className="text-sm text-[#9e9e9e] leading-relaxed max-w-[220px]">
-            The last great desktop application. Local-first AI media organizer with instant P2P sharing.
+          <p className="text-sm text-white/25 leading-relaxed max-w-[200px] mb-5">
+            The last great desktop application. Local-first AI media organizer.
           </p>
-          <div className="flex gap-3 mt-5">
-            <a
-              href={GITHUB_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-8 h-8 rounded-lg bg-[#0f3460] border border-[#2a2a4a] flex items-center justify-center text-[#9e9e9e] hover:text-[#00b4d8] hover:border-[#00b4d8]/40 transition-all"
-              aria-label="GitHub"
-            >
-              <GitHubIcon size={15} />
-            </a>
-          </div>
+          <a
+            href={GITHUB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-white/70 transition-all"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)" }}
+            aria-label="GitHub"
+          >
+            <GitHubIcon size={14} />
+          </a>
         </div>
 
-        {LINKS.map((section) => (
-          <div key={section.heading}>
-            <h3 className="text-xs font-semibold text-[#e0e0e0] uppercase tracking-widest mb-4">
-              {section.heading}
+        {COLS.map((col) => (
+          <div key={col.heading}>
+            <h3 className="text-[10px] font-semibold text-white/20 uppercase tracking-widest mb-5">
+              {col.heading}
             </h3>
-            <ul className="space-y-3">
-              {section.items.map((item) => (
-                <li key={item.label}>
+            <ul className="space-y-3.5">
+              {col.links.map((link) => (
+                <li key={link.label}>
                   <a
-                    href={item.href}
-                    target={"external" in item && item.external ? "_blank" : undefined}
-                    rel={"external" in item && item.external ? "noopener noreferrer" : undefined}
-                    className="text-sm text-[#9e9e9e] hover:text-[#00b4d8] transition-colors"
+                    href={link.href}
+                    target={"ext" in link && link.ext ? "_blank" : undefined}
+                    rel={"ext" in link && link.ext ? "noopener noreferrer" : undefined}
+                    className="text-sm text-white/30 hover:text-white/70 transition-colors"
                   >
-                    {item.label}
+                    {link.label}
                   </a>
                 </li>
               ))}
@@ -120,18 +117,22 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-[#2a2a4a] px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3 max-w-7xl mx-auto">
-        <p className="text-xs text-[#9e9e9e]">
-          © {new Date().getFullYear()} Alaustrup · MIT License · Built with PyQt6, FastAPI, and sentence-transformers
+      <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col md:flex-row items-center justify-between gap-3"
+           style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+        <p className="text-xs text-white/20">
+          © {new Date().getFullYear()} Alaustrup · MIT License
         </p>
-        <div className="flex items-center gap-4 text-xs text-[#9e9e9e]">
+        <div className="flex items-center gap-4 text-xs text-white/20">
           <span>v0.1.0</span>
-          <span className="w-1 h-1 rounded-full bg-[#2a2a4a]" />
-          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="hover:text-[#00b4d8] transition-colors">
+          <span className="w-px h-3 bg-white/10" />
+          <a href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="hover:text-white/50 transition-colors">
             Open Source
           </a>
-          <span className="w-1 h-1 rounded-full bg-[#2a2a4a]" />
-          <span className="text-[#4caf50]">● All systems operational</span>
+          <span className="w-px h-3 bg-white/10" />
+          <span className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            All systems go
+          </span>
         </div>
       </div>
     </footer>

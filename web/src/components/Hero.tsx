@@ -1,191 +1,276 @@
 "use client";
 
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import GitHubIcon from "./GitHubIcon";
 import { OSDownloadButton } from "./OSDownloadButton";
 
 const GITHUB_URL = "https://github.com/ALaustrup/arqyv";
 
+const STATS = [
+  { value: "40+",    label: "File formats" },
+  { value: "100%",   label: "Local & offline" },
+  { value: "0",      label: "Accounts needed" },
+  { value: "Free",   label: "Forever" },
+];
+
 export default function Hero() {
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center pt-16 overflow-hidden">
-      {/* Background glow + grid */}
-      <div className="absolute inset-0 hero-glow grid-bg" />
+    <section className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden pt-[60px]">
 
-      {/* Radial orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#00b4d8]/5 blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 right-1/4 w-72 h-72 rounded-full bg-[#0f3460]/40 blur-3xl pointer-events-none" />
+      {/* ── Background layer ── */}
+      <div className="absolute inset-0 grid-bg opacity-100" />
 
+      {/* Large glow orbs */}
+      <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full"
+           style={{ background: "radial-gradient(ellipse, rgba(0,210,255,0.07) 0%, transparent 70%)" }} />
+      <div className="absolute top-[30%] left-[5%] w-[500px] h-[500px] rounded-full"
+           style={{ background: "radial-gradient(ellipse, rgba(124,58,237,0.06) 0%, transparent 70%)" }} />
+      <div className="absolute top-[20%] right-[5%] w-[400px] h-[400px] rounded-full"
+           style={{ background: "radial-gradient(ellipse, rgba(0,210,255,0.05) 0%, transparent 70%)" }} />
+
+      {/* ── Content ── */}
       <div className="relative z-10 max-w-5xl mx-auto px-6 flex flex-col items-center text-center">
+
         {/* Badge */}
-        <div className="flex items-center gap-2 text-xs font-medium text-[#00b4d8] bg-[#00b4d8]/10 border border-[#00b4d8]/20 rounded-full px-4 py-1.5 mb-8 animate-fade-up">
-          <Zap size={12} className="fill-[#00b4d8]" />
-          v0.1.0 — Now available · AI · P2P Sharing · Zero dependencies
+        <div
+          className="animate-fade-up inline-flex items-center gap-2 mb-10 px-4 py-1.5 rounded-full text-xs font-medium tracking-widest uppercase"
+          style={{
+            background: "rgba(0,210,255,0.06)",
+            border: "1px solid rgba(0,210,255,0.15)",
+            color: "#00d2ff",
+            animationDelay: "0s",
+          }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-[#00d2ff] animate-pulse" />
+          v0.1.0 · Now available · Open Source
         </div>
 
         {/* Headline */}
         <h1
-          className="text-5xl md:text-7xl font-bold leading-tight tracking-tight mb-6 animate-fade-up"
-          style={{ animationDelay: "0.1s" }}
+          className="animate-fade-up text-[clamp(3rem,8vw,6rem)] font-black leading-[0.95] tracking-tight mb-8"
+          style={{ animationDelay: "0.08s" }}
         >
-          The last great{" "}
-          <span className="gradient-text text-glow">
-            desktop application.
-          </span>
+          <span className="gradient-text-white block">Your files.</span>
+          <span className="gradient-text block">Finally intelligent.</span>
         </h1>
 
         {/* Sub-headline */}
         <p
-          className="text-lg md:text-xl text-[#9e9e9e] max-w-2xl leading-relaxed mb-10 animate-fade-up"
-          style={{ animationDelay: "0.2s" }}
+          className="animate-fade-up text-lg md:text-xl text-white/40 max-w-xl leading-relaxed mb-12"
+          style={{ animationDelay: "0.16s" }}
         >
-          ARQYV unifies every file you own — video, audio, documents, photos —
-          into one intelligent, searchable library. It plays anything,
-          understands everything, and lets you share instantly. No accounts.
-          No subscriptions. Forever local-first.
+          ARQYV is a free desktop application that unifies every file you own
+          into one AI-searchable library — with instant P2P sharing and a
+          built-in media engine. No accounts. No cloud. Yours forever.
         </p>
 
-        {/* Primary CTAs */}
+        {/* CTAs */}
         <div
-          className="flex flex-col sm:flex-row items-center gap-4 mb-8 animate-fade-up"
-          style={{ animationDelay: "0.3s" }}
+          className="animate-fade-up flex flex-col sm:flex-row items-center gap-4 mb-16"
+          style={{ animationDelay: "0.24s" }}
         >
           <OSDownloadButton size="lg" />
           <a
             href={GITHUB_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2.5 border border-[#2a2a4a] text-[#e0e0e0] hover:border-[#00b4d8] hover:text-[#00b4d8] px-8 py-3.5 rounded-xl text-base transition-all hover:bg-[#00b4d8]/5"
+            className="flex items-center gap-2.5 text-sm text-white/50 hover:text-white/90 transition-colors px-6 py-3.5 rounded-xl border border-white/[0.07] hover:border-white/20 hover:bg-white/[0.02]"
           >
-            <GitHubIcon size={18} />
+            <GitHubIcon size={16} />
             View on GitHub
+            <ArrowRight size={14} className="opacity-50" />
           </a>
         </div>
 
-        {/* Scroll-to-downloads link */}
+        {/* Stats strip */}
         <div
-          className="flex items-center gap-2 text-sm text-[#9e9e9e] hover:text-[#00b4d8] transition-colors cursor-pointer animate-fade-up mb-6"
-          style={{ animationDelay: "0.4s" }}
-          onClick={() => document.getElementById("download")?.scrollIntoView({ behavior: "smooth" })}
+          className="animate-fade-up w-full max-w-2xl"
+          style={{ animationDelay: "0.32s" }}
         >
-          <ArrowRight size={14} />
-          See all platforms &amp; install instructions
+          <div
+            className="grid grid-cols-4 divide-x rounded-2xl overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            {STATS.map((s, i) => (
+              <div key={s.label} className="py-5 px-4 text-center"
+                   style={i > 0 ? { borderLeft: "1px solid rgba(255,255,255,0.06)" } : {}}>
+                <div className="text-2xl font-bold text-white mb-0.5">{s.value}</div>
+                <div className="text-xs text-white/30 uppercase tracking-widest">{s.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-
-        {/* Social proof */}
-        <p
-          className="text-xs text-[#9e9e9e] mt-8 animate-fade-up"
-          style={{ animationDelay: "0.5s" }}
-        >
-          Open source · MIT License · Python 3.11+ · PyQt6
-        </p>
       </div>
 
-      {/* App mockup */}
+      {/* ── App window mockup ── */}
       <div
-        className="relative z-10 mt-20 w-full max-w-5xl mx-auto px-6 animate-fade-up"
-        style={{ animationDelay: "0.5s" }}
+        className="animate-fade-up relative z-10 mt-24 w-full max-w-5xl mx-auto px-6"
+        style={{ animationDelay: "0.4s" }}
       >
-        <div className="relative rounded-2xl border border-[#2a2a4a] bg-[#16213e] overflow-hidden glow-accent">
-          {/* Window chrome */}
-          <div className="flex items-center gap-1.5 px-4 py-3 bg-[#0f3460] border-b border-[#2a2a4a]">
-            <div className="w-3 h-3 rounded-full bg-[#f44336]/80" />
-            <div className="w-3 h-3 rounded-full bg-[#ff9800]/80" />
-            <div className="w-3 h-3 rounded-full bg-[#4caf50]/80" />
-            <div className="flex-1 mx-4 bg-[#1a1a2e] rounded px-3 py-1 text-xs text-[#9e9e9e] font-mono">
-              ARQYV — AI-powered media organizer
+        {/* Glow under window */}
+        <div className="absolute inset-x-12 bottom-0 h-20 blur-2xl opacity-30"
+             style={{ background: "linear-gradient(to top, #00d2ff, transparent)" }} />
+
+        <div
+          className="relative rounded-2xl overflow-hidden"
+          style={{
+            border: "1px solid rgba(255,255,255,0.07)",
+            background: "linear-gradient(160deg, #0d0d18 0%, #090912 100%)",
+            boxShadow: "0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)",
+          }}
+        >
+          {/* Title bar */}
+          <div
+            className="flex items-center gap-2 px-4 py-3"
+            style={{ background: "rgba(255,255,255,0.02)", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
+            <div className="flex-1 flex justify-center">
+              <div
+                className="px-4 py-1 rounded-md text-xs font-mono text-white/20"
+                style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)" }}
+              >
+                ARQYV — AI media organizer
+              </div>
             </div>
           </div>
 
-          {/* App UI mockup */}
-          <div className="flex h-[380px]">
+          {/* App layout */}
+          <div className="flex h-[360px]">
+
             {/* Sidebar */}
-            <div className="w-52 bg-[#16213e] border-r border-[#2a2a4a] p-3 flex flex-col gap-1 shrink-0">
-              <div className="text-[10px] text-[#9e9e9e] uppercase tracking-widest px-2 py-1">Library</div>
-              {["Videos", "Music", "Photos", "Documents", "Cloud"].map((item, i) => (
+            <div
+              className="w-48 shrink-0 flex flex-col p-3 gap-0.5"
+              style={{ borderRight: "1px solid rgba(255,255,255,0.04)" }}
+            >
+              <div className="text-[9px] font-semibold text-white/20 uppercase tracking-widest px-2 pt-1 pb-2">
+                Library
+              </div>
+              {[
+                { icon: "▶", label: "Videos",    active: true },
+                { icon: "♫", label: "Music",     active: false },
+                { icon: "⬛", label: "Photos",   active: false },
+                { icon: "📄", label: "Documents", active: false },
+                { icon: "☁", label: "Cloud",     active: false },
+              ].map((item) => (
                 <div
-                  key={item}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs transition-colors ${
-                    i === 0 ? "bg-[#00b4d8]/15 text-[#00b4d8]" : "text-[#9e9e9e] hover:text-[#e0e0e0] hover:bg-[#0f3460]"
+                  key={item.label}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors ${
+                    item.active
+                      ? "text-[#00d2ff] bg-[#00d2ff]/[0.08]"
+                      : "text-white/25 hover:text-white/50"
                   }`}
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-60" />
-                  {item}
-                </div>
-              ))}
-              <div className="mt-4 text-[10px] text-[#9e9e9e] uppercase tracking-widest px-2 py-1">Recent</div>
-              {["interview_final.mp4", "beach_2024.jpg", "report_q1.pdf"].map((f) => (
-                <div key={f} className="px-2 py-1 text-[10px] text-[#9e9e9e] truncate hover:text-[#e0e0e0] cursor-pointer">
-                  {f}
+                  <span className="text-[10px] w-3 text-center">{item.icon}</span>
+                  {item.label}
                 </div>
               ))}
             </div>
 
-            {/* Main area */}
-            <div className="flex-1 flex flex-col">
+            {/* Main content */}
+            <div className="flex-1 flex flex-col overflow-hidden">
               {/* Search bar */}
-              <div className="px-4 py-3 border-b border-[#2a2a4a] flex items-center gap-3">
-                <div className="flex-1 bg-[#0f3460] rounded-lg px-3 py-1.5 text-xs text-[#00b4d8] font-mono">
+              <div
+                className="flex items-center gap-3 px-4 py-3"
+                style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+              >
+                <div
+                  className="flex-1 flex items-center gap-2 px-3 py-1.5 rounded-lg font-mono text-xs text-[#00d2ff]"
+                  style={{ background: "rgba(0,210,255,0.05)", border: "1px solid rgba(0,210,255,0.1)" }}
+                >
+                  <span className="text-white/20">🔍</span>
                   beach sunset type:video date:&gt;2024
+                  <span className="ml-auto text-white/20 text-[10px]">24 results</span>
                 </div>
-                <div className="text-[10px] text-[#9e9e9e] whitespace-nowrap">24 results</div>
+                <div className="flex items-center gap-2 text-[10px] text-white/20">
+                  <span className="px-2 py-1 rounded border border-white/[0.06]">Grid</span>
+                </div>
               </div>
 
-              {/* Grid */}
-              <div className="flex-1 p-4 grid grid-cols-4 gap-3 content-start overflow-hidden">
-                {Array.from({ length: 8 }).map((_, i) => (
+              {/* File grid */}
+              <div className="flex-1 p-4 grid grid-cols-5 gap-2.5 content-start overflow-hidden">
+                {[
+                  { label: "beach_4k.mp4",   accent: true,  bg: "linear-gradient(135deg,#0d3a5c,#00d2ff22)" },
+                  { label: "sunset.mkv",      accent: false, bg: "linear-gradient(135deg,#1a1a2e,#16213e)" },
+                  { label: "waves.flac",      accent: false, bg: "linear-gradient(135deg,#0f2027,#203a43)" },
+                  { label: "travel.mp4",      accent: false, bg: "linear-gradient(135deg,#1a1a2e,#2d1b69)" },
+                  { label: "portrait.jpg",    accent: false, bg: "linear-gradient(135deg,#1a2a1a,#1e3a2e)" },
+                  { label: "concert.mp4",     accent: false, bg: "linear-gradient(135deg,#2a1a1a,#3a2020)" },
+                  { label: "podcast.mp3",     accent: false, bg: "linear-gradient(135deg,#1a1a2e,#0f3460)" },
+                  { label: "report.pdf",      accent: false, bg: "linear-gradient(135deg,#1a1a1a,#2a2a2a)" },
+                  { label: "holiday.mp4",     accent: false, bg: "linear-gradient(135deg,#0d2137,#1a3a5c)" },
+                  { label: "interview.mp4",   accent: false, bg: "linear-gradient(135deg,#1a1a2e,#16213e)" },
+                ].map((f, i) => (
                   <div
                     key={i}
-                    className={`aspect-video rounded-lg border border-[#2a2a4a] flex items-end p-1.5 ${
-                      i === 0 ? "border-[#00b4d8]/60 bg-[#00b4d8]/5" : "bg-[#0f3460]/40"
+                    className={`aspect-video rounded-lg flex flex-col justify-end p-1.5 relative overflow-hidden ${
+                      f.accent ? "ring-1 ring-[#00d2ff]/30" : ""
                     }`}
-                    style={{
-                      background: i === 0
-                        ? "linear-gradient(135deg, #0f3460 0%, #00b4d8 200%)"
-                        : `hsl(${220 + i * 8}deg 30% ${10 + i * 2}%)`,
-                    }}
+                    style={{ background: f.bg, border: "1px solid rgba(255,255,255,0.05)" }}
                   >
-                    <div className="text-[9px] text-[#e0e0e0]/70 truncate w-full">
-                      {["▶ beach_4k.mp4","▶ sunset.mkv","🎵 waves.flac","📄 journal.pdf","▶ travel.mp4","🖼 portrait.jpg","▶ night.mp4","📄 notes.md"][i]}
-                    </div>
+                    {f.accent && (
+                      <div className="absolute inset-0 bg-[#00d2ff]/5" />
+                    )}
+                    <div className="relative text-[8px] text-white/40 truncate">{f.label}</div>
                   </div>
                 ))}
               </div>
 
               {/* Player bar */}
-              <div className="border-t border-[#2a2a4a] px-4 py-2.5 flex items-center gap-4 bg-[#16213e]">
-                <div className="flex items-center gap-2 text-[#00b4d8]">
-                  <span className="text-xs">⏮</span>
-                  <span className="text-base">▶</span>
-                  <span className="text-xs">⏭</span>
+              <div
+                className="flex items-center gap-3 px-4 py-2.5"
+                style={{ borderTop: "1px solid rgba(255,255,255,0.04)", background: "rgba(0,0,0,0.2)" }}
+              >
+                <div className="flex items-center gap-2 text-[#00d2ff] text-xs">⏮ ▶ ⏭</div>
+                <div className="font-mono text-[9px] text-white/25">1:24 / 4:37</div>
+                <div className="flex-1 h-[2px] rounded-full bg-white/[0.07] overflow-hidden">
+                  <div className="h-full w-[30%] rounded-full" style={{ background: "#00d2ff" }} />
                 </div>
-                <div className="text-[10px] text-[#9e9e9e] font-mono whitespace-nowrap">1:24 / 4:37</div>
-                <div className="flex-1 h-1 bg-[#2a2a4a] rounded-full overflow-hidden">
-                  <div className="h-full w-[30%] bg-[#00b4d8] rounded-full" />
-                </div>
-                <div className="text-[10px] text-[#9e9e9e]">H.264 · 4K</div>
-                <div className="text-[10px] text-[#00b4d8]">Qt Backend</div>
+                <div className="text-[9px] text-[#00d2ff]/70 font-mono">H.264 · 4K</div>
               </div>
             </div>
 
             {/* Info panel */}
-            <div className="w-44 bg-[#16213e] border-l border-[#2a2a4a] p-3 text-[10px] shrink-0 hidden lg:block">
-              <div className="text-[#9e9e9e] uppercase tracking-widest mb-2">AI Analysis</div>
-              <div className="text-[#00b4d8] mb-1">beach_4k.mp4</div>
-              <div className="text-[#9e9e9e] leading-relaxed mb-3">Sunset beach timelapse with golden hour lighting and ocean waves.</div>
-              <div className="text-[#9e9e9e] uppercase tracking-widest mb-1.5">Tags</div>
+            <div
+              className="w-44 shrink-0 hidden lg:flex flex-col p-4 gap-3"
+              style={{ borderLeft: "1px solid rgba(255,255,255,0.04)" }}
+            >
+              <div className="text-[9px] text-white/20 uppercase tracking-widest">AI Analysis</div>
+              <div className="text-[10px] font-semibold text-[#00d2ff]">beach_4k.mp4</div>
+              <p className="text-[9px] text-white/30 leading-relaxed">
+                Sunset beach timelapse with golden hour lighting and ocean waves.
+              </p>
+              <div className="text-[9px] text-white/20 uppercase tracking-widest">Tags</div>
               <div className="flex flex-wrap gap-1">
-                {["beach","sunset","4K","travel","ocean"].map(t => (
-                  <span key={t} className="bg-[#00b4d8]/10 text-[#00b4d8] rounded px-1.5 py-0.5">{t}</span>
+                {["beach","sunset","4K","ocean","travel"].map((t) => (
+                  <span
+                    key={t}
+                    className="text-[8px] px-1.5 py-0.5 rounded text-[#00d2ff]/80"
+                    style={{ background: "rgba(0,210,255,0.08)", border: "1px solid rgba(0,210,255,0.12)" }}
+                  >
+                    {t}
+                  </span>
                 ))}
+              </div>
+              <div className="mt-auto pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                <div className="text-[8px] text-white/20 mb-1">Backend</div>
+                <div className="text-[9px] text-[#00d2ff]/60">Qt Multimedia</div>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Bottom fade */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#1a1a2e] to-transparent pointer-events-none" />
       </div>
+
+      {/* Bottom fade */}
+      <div
+        className="absolute bottom-0 inset-x-0 h-40 pointer-events-none"
+        style={{ background: "linear-gradient(to top, #050508, transparent)" }}
+      />
     </section>
   );
 }
