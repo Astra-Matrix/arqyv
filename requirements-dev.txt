@@ -1,0 +1,27 @@
+-r requirements.txt
+
+# ── Testing ─────────────────────────────────────────────────────────────────
+pytest>=8.2.0
+pytest-qt>=4.4.0
+pytest-asyncio>=0.23.7
+pytest-cov>=5.0.0
+pytest-mock>=3.14.0
+factory-boy>=3.3.0
+
+# ── Linting / Formatting ─────────────────────────────────────────────────────
+ruff>=0.4.7
+mypy>=1.10.0
+pre-commit>=3.7.1
+
+# ── Build / Packaging ────────────────────────────────────────────────────────
+pyinstaller>=6.7.0    # bundle to standalone executable
+nuitka>=2.3.2         # optional: compiled binary (faster cold-start)
+
+# ── Documentation ────────────────────────────────────────────────────────────
+mkdocs>=1.6.0
+mkdocs-material>=9.5.25
+mkdocstrings[python]>=0.25.1
+
+# ── Dev Tools ────────────────────────────────────────────────────────────────
+ipython>=8.25.0
+debugpy>=1.8.1

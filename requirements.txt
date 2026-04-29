@@ -1,0 +1,68 @@
+# ── UI Framework ────────────────────────────────────────────────────────────
+PyQt6>=6.7.0
+PyQt6-Qt6>=6.7.0        # includes QtMultimedia, QtMultimediaWidgets
+PyQt6-sip>=13.6.0
+
+# ── Media Playback ──────────────────────────────────────────────────────────
+# Tier 1: python-vlc wraps libvlc – maximum codec/format support.
+#   Auto-detected from any system VLC installation at runtime.
+#   If VLC is not installed, Tier 2 (Qt Multimedia) takes over automatically.
+python-vlc>=3.0.21203
+# Tier 2: Qt Multimedia – zero-dependency fallback (ships with PyQt6-Qt6).
+#   Uses WMF (Windows), AVFoundation (macOS), GStreamer (Linux).
+#   No extra install needed – works on every machine out of the box.
+Pillow>=10.3.0          # thumbnails, image processing
+
+# ── AI / Machine Learning ───────────────────────────────────────────────────
+sentence-transformers>=3.0.1    # semantic embeddings (local, offline-capable)
+transformers>=4.41.0            # HuggingFace models (captioning, tagging)
+torch>=2.3.0                    # PyTorch backend
+openai-whisper>=20231117        # voice search / audio transcription
+spacy>=3.7.4                    # NLP pipeline for metadata extraction
+Pillow>=10.3.0
+
+# ── Database / Vector Store ─────────────────────────────────────────────────
+SQLAlchemy>=2.0.30              # ORM for relational metadata
+alembic>=1.13.1                 # schema migrations
+chromadb>=0.5.0                 # local vector database for semantic search
+aiosqlite>=0.20.0               # async SQLite driver
+
+# ── Search ──────────────────────────────────────────────────────────────────
+whoosh>=2.7.4                   # full-text search fallback (pure Python)
+rank-bm25>=0.2.2                # BM25 ranking
+
+# ── File System / Watching ──────────────────────────────────────────────────
+watchdog>=4.0.1                 # cross-platform FS event watcher
+send2trash>=1.8.3               # safe file deletion
+
+# ── Cloud Storage ───────────────────────────────────────────────────────────
+google-api-python-client>=2.131.0
+google-auth-httplib2>=0.2.0
+google-auth-oauthlib>=1.2.0
+msal>=1.29.0                    # Microsoft identity (OneDrive)
+dropbox>=12.0.0
+
+# ── Metadata & File Parsing ─────────────────────────────────────────────────
+mutagen>=1.47.0                 # audio tags (MP3, FLAC, AAC, …)
+pymediainfo>=6.1.0              # video/audio tech metadata via MediaInfo
+python-docx>=1.1.2              # Word documents
+PyMuPDF>=1.24.4                 # PDF reading (fast, cross-platform)
+openpyxl>=3.1.3                 # Excel files
+python-pptx>=0.6.23             # PowerPoint files
+exifread>=3.0.0                 # EXIF/IPTC/XMP for images
+
+# ── Async / Concurrency ─────────────────────────────────────────────────────
+anyio>=4.4.0
+httpx>=0.27.0                   # async HTTP client (cloud APIs)
+
+# ── Config / Serialization ──────────────────────────────────────────────────
+pydantic>=2.7.1                 # settings validation and serialization
+pydantic-settings>=2.3.0
+toml>=0.10.2
+
+# ── Utilities ───────────────────────────────────────────────────────────────
+click>=8.1.7                    # CLI entry-point helpers
+rich>=13.7.1                    # console output / progress bars
+platformdirs>=4.2.2             # XDG-compliant app data paths
+python-dateutil>=2.9.0
+humanize>=4.9.0

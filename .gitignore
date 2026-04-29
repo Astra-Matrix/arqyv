@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.env
+.venv/
+venv/
+ENV/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Type checking
+.mypy_cache/
+.ruff_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ARQYV runtime data (user-specific, not tracked)
+*.db
+*.db-wal
+*.db-shm
+vectordb/
+thumbnails/
+gdrive_token.json
+onedrive_cache.bin
+dropbox_token.txt
+user_settings.json
+arqyv.log*
+
+# Build
+dist/
+*.spec
+
+# Docs
+site/

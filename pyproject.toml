@@ -1,0 +1,65 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "arqyv"
+version = "0.1.0"
+description = "AI-powered smart media organizer and semantic search tool"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Alaustrup" }]
+requires-python = ">=3.11"
+keywords = ["media", "organizer", "ai", "semantic-search", "desktop"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: X11 Applications :: Qt",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia",
+    "Topic :: Desktop Environment :: File Managers",
+]
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.scripts]
+arqyv = "arqyv.main:main"
+
+[project.urls]
+Homepage = "https://github.com/Alaustrup/arqyv"
+Repository = "https://github.com/Alaustrup/arqyv"
+Issues = "https://github.com/Alaustrup/arqyv/issues"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "ANN"]
+ignore = ["ANN101", "ANN102", "ANN401"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["ANN", "S101"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+ignore_missing_imports = true
+exclude = ["mobile/", "scripts/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
+
+[tool.coverage.run]
+source = ["src/arqyv"]
+omit = ["*/tests/*", "*/migrations/*"]
