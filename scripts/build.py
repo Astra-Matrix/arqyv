@@ -15,7 +15,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
 DIST = ROOT / "dist"
-SPEC_FILE = ROOT / "arqyv.spec"
+ASSETS = ROOT / "assets"
+ICONS_DIR = ASSETS / "icons"
 
 
 def build(platform: str) -> None:
@@ -26,21 +27,36 @@ def build(platform: str) -> None:
         "--name", "ARQYV",
         "--onedir",
         "--windowed",
-        "--icon", str(ROOT / "assets" / "icons" / "arqyv.ico"),
-        "--add-data", f"{ROOT / 'assets'}:assets",
+        "--hidden-import", "arqyv",
         "--hidden-import", "vlc",
         "--hidden-import", "chromadb",
         "--hidden-import", "sentence_transformers",
         "--collect-all", "sentence_transformers",
         "--collect-all", "chromadb",
-        str(ROOT / "src" / "arqyv" / "main.py"),
+        "--collect-all", "arqyv",
+        str(ROOT / "src" / "arqyv" / "__main__.py"),
     ]
 
+    # Icon is optional — skip silently if not present
+    icon_path = ICONS_DIR / ("arqyv.ico" if platform == "win" else "arqyv.icns" if platform == "mac" else "arqyv.png")
+    if icon_path.exists():
+        cmd += ["--icon", str(icon_path)]
+    else:
+        print(f"  (icon not found at {icon_path}, building without icon)")
+
+    # Embed assets directory if it exists
+    if ASSETS.exists():
+        sep = ";" if platform == "win" else ":"
+        cmd += ["--add-data", f"{ASSETS}{sep}assets"]
+
+    # Windows version info file (optional)
     if platform == "win":
-        cmd += ["--version-file", str(ROOT / "scripts" / "version_info.txt")]
+        vf = ROOT / "scripts" / "version_info.txt"
+        if vf.exists():
+            cmd += ["--version-file", str(vf)]
 
     subprocess.run(cmd, check=True, cwd=ROOT)
-    print(f"\n✓ Build complete: {DIST}")
+    print(f"\nBuild complete: {DIST}")
 
 
 def main() -> None:
