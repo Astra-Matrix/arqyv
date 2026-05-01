@@ -106,6 +106,18 @@ class AppConfig(BaseSettings):
     # ── API server ─────────────────────────────────────────────────────────
     api_port: int = Field(default=8765, description="Port for the local API server.")
 
+    # ── Microservice overrides (Version B / Docker) ────────────────────────────
+    # Set DATABASE_URL / REDIS_URL in docker-compose environment; they take
+    # precedence over the sqlite defaults used in monolith mode.
+    database_url: str = Field(
+        default="",
+        description="Full SQLAlchemy URL (Docker). Overrides db.url and sqlite default.",
+    )
+    redis_url: str = Field(
+        default="redis://localhost:6379/0",
+        description="Redis connection URL for Version B event bus.",
+    )
+
     # ── Sub-configs ────────────────────────────────────────────────────────
     db: DatabaseConfig = Field(default_factory=DatabaseConfig)
     ai: AIConfig = Field(default_factory=AIConfig)
@@ -120,6 +132,9 @@ class AppConfig(BaseSettings):
 
     @property
     def db_url(self) -> str:
+        # Priority: DATABASE_URL env var (Docker) → db.url → SQLite default
+        if self.database_url:
+            return self.database_url
         if self.db.url:
             return self.db.url
         return f"sqlite+aiosqlite:///{self.data_dir / 'arqyv.db'}"
@@ -137,5 +152,15 @@ class AppConfig(BaseSettings):
         return p
 
 
-# Global singleton – import and use anywhere.
+# Global singleton — import and use anywhere in the monolith.
 config = AppConfig()
+
+
+def settings_from_env() -> AppConfig:
+    """
+    Create a fresh AppConfig fully hydrated from environment variables.
+
+    Used by Version B microservice workers so each Docker container reads
+    its own DATABASE_URL, REDIS_URL, and ARQYV_* env vars independently.
+    """
+    return AppConfig()

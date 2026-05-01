@@ -1,0 +1,13 @@
+qt.multimedia.ffmpeg: Using Qt multimedia with FFmpeg version 7.1.3 LGPL version 2.1 or later
+Input #0, flac, from 'X:/cool/02 - Spiraltrap - VoidLurker.flac':
+  Metadata:
+    TITLE           : 02 - Spiraltrap - VoidLurker
+    ARTIST          : Spiraltrap
+    ALBUM           : A Black Hole Story (Special Edition)
+    track           : 2
+    GENRE           : IDM-Experimental, Electronic, Psychedelic
+  Duration: 00:04:22.27, start: 0.000000, bitrate: 1062 kb/s
+  Stream #0:0: Audio: flac, 44100 Hz, stereo, s16
+  Stream #0:1: Video: mjpeg (Progressive), yuvj444p(pc, bt470bg/unknown/unknown), 500x500, 90k tbr, 90k tbn (attached pic)
+      Metadata:
+        comment         : Cover (front)

@@ -1,16 +1,12 @@
-"""Media player widget — drives ARQYVMediaEngine.
-
-The widget owns zero playback logic. It is purely a control surface
-that translates user interactions into engine calls and engine signals
-into UI updates.
+"""
+ARQYV Media Player Widget — professional control surface.
 
 Layout:
-  ┌─ Video Surface (QVideoWidget) ──────────────────────────┐
+  ┌─ Video / album art surface ──────────────────────────────┐
   │                                                          │
-  │           [Subtitle overlay — transparent]               │
   └──────────────────────────────────────────────────────────┘
-  ─── Seek slider ────────────────────────────────────────────
-  ▶  ■  0:00 / 0:00  ───────────  🔊 ───  −  1.0×  +  [fmt]
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  seek bar
+  ⏮  ⏪  ▶  ⏩  ⏭    0:00 / 0:00    ·   format   ┃   ⇀ ↺ CC   ┃   vol   ┃   0.75→1.00→1.25×
 """
 
 from __future__ import annotations
@@ -18,7 +14,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, QSize, pyqtSlot
 from PyQt6.QtMultimediaWidgets import QVideoWidget
 from PyQt6.QtWidgets import (
     QHBoxLayout,
@@ -28,145 +24,257 @@ from PyQt6.QtWidgets import (
     QSlider,
     QVBoxLayout,
     QWidget,
+    QFrame,
 )
 
 from arqyv.config import AppConfig
 from arqyv.core.events import EventBus, Events
 from arqyv.engine.subtitle import SubtitleOverlay
+from arqyv.ui.themes.dark import PALETTE as P
 
 log = logging.getLogger(__name__)
 
+_BTN_SIZE = 30    # transport control button size
+_BTN_SMALL = 26   # secondary button size
+
+
+def _fmt(ms: int) -> str:
+    s = max(0, ms) // 1000
+    m, s = divmod(s, 60)
+    h, m = divmod(m, 60)
+    return f"{h}:{m:02}:{s:02}" if h else f"{m}:{s:02}"
+
+
+def _sep() -> QFrame:
+    f = QFrame()
+    f.setFrameShape(QFrame.Shape.VLine)
+    f.setStyleSheet(f"color: {P['border2']};")
+    f.setFixedHeight(20)
+    return f
+
 
 class MediaPlayerWidget(QWidget):
-    """Pure control-surface widget — all logic lives in ARQYVMediaEngine."""
+    """Pure control-surface — all playback logic lives in ARQYVMediaEngine."""
 
-    def __init__(
-        self,
-        config: AppConfig,
-        events: EventBus,
-        parent: QWidget | None = None,
-    ) -> None:
+    def __init__(self, config: AppConfig, events: EventBus, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.config = config
         self.events = events
-        self._engine: "ARQYVMediaEngine | None" = None  # type: ignore[name-defined]
+        self._engine = None
         self._rate = 1.0
         self._build_ui()
 
-    # ── UI construction ────────────────────────────────────────────────────
+    # ── Build ──────────────────────────────────────────────────────────────
 
     def _build_ui(self) -> None:
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
-        # Video surface + subtitle overlay (stacked)
+        # ── Video surface ──────────────────────────────────────────────────
         self._video = QVideoWidget()
-        self._video.setStyleSheet("background:#000;")
+        self._video.setStyleSheet("background: #000;")
         self._video.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-        self._video.setMinimumHeight(140)
+        self._video.setMinimumHeight(120)
 
         self._subtitle = SubtitleOverlay(self._video)
         self._subtitle.resize(self._video.size())
-        self._video.resizeEvent = self._on_video_resize  # type: ignore[method-assign]
-
+        self._video.resizeEvent = self._on_video_resize   # type: ignore[method-assign]
         root.addWidget(self._video, 1)
 
-        # Seek slider
+        # ── Seek bar ───────────────────────────────────────────────────────
         self._seek = QSlider(Qt.Orientation.Horizontal)
         self._seek.setRange(0, 1000)
+        self._seek.setFixedHeight(18)
+        self._seek.setStyleSheet(f"""
+            QSlider::groove:horizontal {{
+                height: 3px;
+                background: {P['border2']};
+                border-radius: 2px;
+                margin: 0 2px;
+            }}
+            QSlider::sub-page:horizontal {{
+                background: {P['cyan']};
+                border-radius: 2px;
+            }}
+            QSlider::handle:horizontal {{
+                background: {P['cyan']};
+                border: 2px solid {P['bg0']};
+                border-radius: 6px;
+                width: 12px;
+                height: 12px;
+                margin: -5px 0;
+            }}
+            QSlider::handle:horizontal:hover {{
+                background: #33daff;
+                width: 14px;
+                height: 14px;
+                margin: -6px 0;
+            }}
+        """)
         self._seek.sliderMoved.connect(self._on_seek)
-        self._seek.setToolTip("Seek")
         root.addWidget(self._seek)
 
-        # Controls bar
-        bar = QHBoxLayout()
-        bar.setContentsMargins(8, 4, 8, 6)
-        bar.setSpacing(6)
+        # ── Control bar container ──────────────────────────────────────────
+        bar_widget = QWidget()
+        bar_widget.setFixedHeight(46)
+        bar_widget.setStyleSheet(f"background: {P['bg1']}; border-top: 1px solid {P['border']};")
+        bar = QHBoxLayout(bar_widget)
+        bar.setContentsMargins(12, 0, 12, 0)
+        bar.setSpacing(4)
 
-        self._play_btn  = self._mk_btn("▶",  "Play / Pause (Space)", self._on_play_pause, 36)
-        self._stop_btn  = self._mk_btn("■",  "Stop",                  self._on_stop,       36)
-        self._prev_btn  = self._mk_btn("⏮",  "Previous track",        self._on_prev,       36)
-        self._next_btn  = self._mk_btn("⏭",  "Next track",            self._on_next,       36)
-
-        self._time_lbl  = QLabel("0:00 / 0:00")
-        self._time_lbl.setFixedWidth(116)
-        self._time_lbl.setStyleSheet("font-family:monospace; font-size:12px;")
-
-        vol_icon = QLabel("🔊")
-        self._vol = QSlider(Qt.Orientation.Horizontal)
-        self._vol.setRange(0, 100)
-        self._vol.setValue(80)
-        self._vol.setFixedWidth(80)
-        self._vol.setToolTip("Volume")
-        self._vol.valueChanged.connect(self._on_volume)
-
-        self._spd_dn = self._mk_btn("−", "Slower",  self._on_speed_dn, 26)
-        self._spd_lbl = QLabel("1×")
-        self._spd_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self._spd_lbl.setFixedWidth(36)
-        self._spd_up = self._mk_btn("+", "Faster",  self._on_speed_up, 26)
-
-        self._fmt_lbl = QLabel("")
-        self._fmt_lbl.setStyleSheet("color:#555; font-size:10px;")
-
-        self._shuf_btn   = self._mk_btn("⇀",  "Toggle shuffle",  self._on_shuffle,   30)
-        self._repeat_btn = self._mk_btn("↺",  "Cycle repeat",    self._on_repeat,    30)
-        self._sub_btn    = self._mk_btn("CC", "Load subtitles",   self._on_load_subs, 32)
+        # Transport controls
+        self._prev_btn  = self._tbtn("⏮", "Previous",   self._on_prev)
+        self._rew_btn   = self._tbtn("⏪", "−10 s",      self._on_rewind)
+        self._play_btn  = self._tbtn("▶", "Play / Pause", self._on_play_pause, primary=True)
+        self._fwd_btn   = self._tbtn("⏩", "+10 s",       self._on_forward)
+        self._next_btn  = self._tbtn("⏭", "Next",        self._on_next)
 
         bar.addWidget(self._prev_btn)
+        bar.addWidget(self._rew_btn)
+        bar.addSpacing(2)
         bar.addWidget(self._play_btn)
-        bar.addWidget(self._stop_btn)
+        bar.addSpacing(2)
+        bar.addWidget(self._fwd_btn)
         bar.addWidget(self._next_btn)
+        bar.addSpacing(10)
+
+        # Time display
+        self._time_lbl = QLabel("0:00 / 0:00")
+        self._time_lbl.setStyleSheet(f"""
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: {P['text2']};
+            letter-spacing: 0.02em;
+        """)
+        self._time_lbl.setFixedWidth(120)
         bar.addWidget(self._time_lbl)
+        bar.addSpacing(6)
+
+        # Format pill
+        self._fmt_lbl = QLabel("")
+        self._fmt_lbl.setStyleSheet(f"""
+            background: {P['bg3']};
+            color: {P['text3']};
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            padding: 2px 7px;
+            border-radius: 10px;
+        """)
+        bar.addWidget(self._fmt_lbl)
+
         bar.addStretch()
+        bar.addWidget(_sep())
+        bar.addSpacing(6)
+
+        # Secondary controls: shuffle / repeat / subs
+        self._shuf_btn   = self._sbtn("⇀",  "Shuffle",        self._on_shuffle)
+        self._repeat_btn = self._sbtn("↺",  "Repeat",         self._on_repeat)
+        self._sub_btn    = self._sbtn("CC", "Load Subtitles",  self._on_load_subs)
         bar.addWidget(self._shuf_btn)
         bar.addWidget(self._repeat_btn)
         bar.addWidget(self._sub_btn)
-        bar.addSpacing(8)
-        bar.addWidget(vol_icon)
+
+        bar.addSpacing(6)
+        bar.addWidget(_sep())
+        bar.addSpacing(6)
+
+        # Volume
+        self._vol_lbl = QLabel("▶")
+        self._vol_lbl.setStyleSheet(f"color: {P['text2']}; font-size: 11px;")
+        self._vol = QSlider(Qt.Orientation.Horizontal)
+        self._vol.setRange(0, 100)
+        self._vol.setValue(80)
+        self._vol.setFixedWidth(72)
+        self._vol.setFixedHeight(18)
+        self._vol.setToolTip("Volume")
+        self._vol.valueChanged.connect(self._on_volume)
+        bar.addWidget(self._vol_lbl)
         bar.addWidget(self._vol)
-        bar.addSpacing(8)
+
+        bar.addSpacing(6)
+        bar.addWidget(_sep())
+        bar.addSpacing(6)
+
+        # Speed control
+        self._spd_dn  = self._sbtn("−", "Slower", self._on_speed_dn)
+        self._spd_lbl = QLabel("1×")
+        self._spd_lbl.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self._spd_lbl.setFixedWidth(34)
+        self._spd_lbl.setStyleSheet(f"color: {P['text']}; font-size: 12px; font-weight: 600;")
+        self._spd_up  = self._sbtn("+", "Faster", self._on_speed_up)
+
         bar.addWidget(self._spd_dn)
         bar.addWidget(self._spd_lbl)
         bar.addWidget(self._spd_up)
-        bar.addSpacing(8)
-        bar.addWidget(self._fmt_lbl)
 
-        root.addLayout(bar)
+        root.addWidget(bar_widget)
 
-    @staticmethod
-    def _mk_btn(text: str, tip: str, slot: object, w: int) -> QPushButton:
+    def _tbtn(self, text: str, tip: str, slot: object, primary: bool = False) -> QPushButton:
         b = QPushButton(text)
-        b.setFixedWidth(w)
+        b.setFixedSize(QSize(_BTN_SIZE, _BTN_SIZE))
         b.setToolTip(tip)
         b.clicked.connect(slot)  # type: ignore[arg-type]
+        if primary:
+            b.setStyleSheet(f"""
+                QPushButton {{
+                    background: {P['bg4']};
+                    border: 1px solid {P['border2']};
+                    border-radius: 15px;
+                    color: {P['text']};
+                    font-size: 13px;
+                    font-weight: 600;
+                }}
+                QPushButton:hover {{
+                    background: {P['cyan']};
+                    color: {P['bg0']};
+                    border-color: {P['cyan']};
+                }}
+                QPushButton:pressed {{
+                    background: {P['cyan2']};
+                    color: {P['bg0']};
+                }}
+            """)
+        else:
+            b.setStyleSheet(f"""
+                QPushButton {{
+                    background: transparent;
+                    border: none;
+                    color: {P['text2']};
+                    font-size: 14px;
+                    border-radius: 5px;
+                }}
+                QPushButton:hover {{ color: {P['text']}; background: {P['bg3']}; }}
+                QPushButton:pressed {{ color: {P['cyan']}; }}
+            """)
+        return b
+
+    def _sbtn(self, text: str, tip: str, slot: object) -> QPushButton:
+        b = QPushButton(text)
+        b.setFixedSize(QSize(_BTN_SMALL, _BTN_SMALL))
+        b.setCheckable(True)
+        b.setToolTip(tip)
+        b.clicked.connect(slot)  # type: ignore[arg-type]
+        b.setObjectName("ghost")
         return b
 
     # ── Engine wiring ──────────────────────────────────────────────────────
 
-    def init_engine(self) -> "ARQYVMediaEngine":  # type: ignore[name-defined]
-        """Create and wire the ARQYVMediaEngine. Call once after __init__."""
+    def init_engine(self):
         from arqyv.engine.core import ARQYVMediaEngine
-        self._engine = ARQYVMediaEngine(
-            config=self.config,
-            video_widget=self._video,
-            parent=self,
-        )
+        self._engine = ARQYVMediaEngine(config=self.config, video_widget=self._video, parent=self)
         self._engine.attach_subtitle_overlay(self._subtitle)
         self._engine.state_changed.connect(self._on_state)
         self._engine.position_changed.connect(self._on_position)
         self._engine.format_detected.connect(self._on_format)
         self._engine.error.connect(self._on_error)
-        # Set initial volume
         self._engine.set_volume(self._vol.value())
         return self._engine
 
     @property
-    def engine(self) -> "ARQYVMediaEngine | None":  # type: ignore[name-defined]
+    def engine(self):
         return self._engine
-
-    # ── Public helpers ─────────────────────────────────────────────────────
 
     def open_file(self, path: str | Path) -> None:
         if self._engine:
@@ -180,33 +288,39 @@ class MediaPlayerWidget(QWidget):
 
     @pyqtSlot()
     def _on_play_pause(self) -> None:
-        if self._engine:
-            self._engine.toggle()
+        if self._engine: self._engine.toggle()
 
     @pyqtSlot()
     def _on_stop(self) -> None:
-        if self._engine:
-            self._engine.stop()
+        if self._engine: self._engine.stop()
 
     @pyqtSlot()
     def _on_prev(self) -> None:
-        if self._engine:
-            self._engine.play_previous()
+        if self._engine: self._engine.play_previous()
 
     @pyqtSlot()
     def _on_next(self) -> None:
+        if self._engine: self._engine.play_next()
+
+    @pyqtSlot()
+    def _on_rewind(self) -> None:
         if self._engine:
-            self._engine.play_next()
+            self._engine.seek_ms(max(0, self._engine.position_ms - 10_000))
+
+    @pyqtSlot()
+    def _on_forward(self) -> None:
+        if self._engine:
+            self._engine.seek_ms(self._engine.position_ms + 10_000)
 
     @pyqtSlot(int)
     def _on_seek(self, value: int) -> None:
-        if self._engine:
-            self._engine.seek(value / 1000.0)
+        if self._engine: self._engine.seek(value / 1000.0)
 
     @pyqtSlot(int)
     def _on_volume(self, value: int) -> None:
-        if self._engine:
-            self._engine.set_volume(value)
+        if self._engine: self._engine.set_volume(value)
+        icon = "▶" if value == 0 else ("▷" if value < 40 else "▶")
+        self._vol_lbl.setText(icon)
 
     @pyqtSlot()
     def _on_speed_up(self) -> None:
@@ -219,28 +333,27 @@ class MediaPlayerWidget(QWidget):
         self._apply_rate()
 
     def _apply_rate(self) -> None:
-        if self._engine:
-            self._engine.set_rate(self._rate)
+        if self._engine: self._engine.set_rate(self._rate)
         self._spd_lbl.setText(f"{self._rate:g}×")
+        color = P['cyan'] if self._rate != 1.0 else P['text']
+        self._spd_lbl.setStyleSheet(
+            f"color: {color}; font-size: 12px; font-weight: 600;"
+        )
 
     @pyqtSlot()
     def _on_shuffle(self) -> None:
-        if self._engine:
-            enabled = self._engine.playlist.toggle_shuffle()
-            self._shuf_btn.setStyleSheet(
-                "color:#00b4d8;" if enabled else ""
-            )
+        if not self._engine: return
+        on = self._engine.playlist.toggle_shuffle()
+        self._shuf_btn.setChecked(on)
 
     @pyqtSlot()
     def _on_repeat(self) -> None:
-        if not self._engine:
-            return
+        if not self._engine: return
         from arqyv.engine.playlist import RepeatMode
         mode = self._engine.playlist.cycle_repeat()
-        icons = {RepeatMode.NONE: "↺", RepeatMode.ONE: "↻¹", RepeatMode.ALL: "↻"}
-        colors = {RepeatMode.NONE: "", RepeatMode.ONE: "color:#ff9800;", RepeatMode.ALL: "color:#00b4d8;"}
-        self._repeat_btn.setText(icons[mode])
-        self._repeat_btn.setStyleSheet(colors[mode])
+        labels = {RepeatMode.NONE: "↺", RepeatMode.ONE: "↻¹", RepeatMode.ALL: "↻"}
+        self._repeat_btn.setText(labels[mode])
+        self._repeat_btn.setChecked(mode != RepeatMode.NONE)
 
     @pyqtSlot()
     def _on_load_subs(self) -> None:
@@ -258,8 +371,7 @@ class MediaPlayerWidget(QWidget):
 
     @pyqtSlot(str)
     def _on_state(self, state: str) -> None:
-        icons = {"playing": "⏸", "paused": "▶", "stopped": "▶", "ended": "▶"}
-        self._play_btn.setText(icons.get(state, "▶"))
+        self._play_btn.setText("⏸" if state == "playing" else "▶")
         self.events.emit(Events.PLAYER_STATE_CHANGED, state=state)
 
     @pyqtSlot(int, int)
@@ -268,31 +380,21 @@ class MediaPlayerWidget(QWidget):
             self._seek.blockSignals(True)
             self._seek.setValue(int(position_ms / duration_ms * 1000))
             self._seek.blockSignals(False)
-        self._time_lbl.setText(f"{_fmt(position_ms)} / {_fmt(duration_ms)}")
+        self._time_lbl.setText(f"{_fmt(position_ms)}  /  {_fmt(duration_ms)}")
         self.events.emit(Events.PLAYER_POSITION_CHANGED, position=position_ms, length_ms=duration_ms)
 
     @pyqtSlot(str)
     def _on_format(self, fmt_str: str) -> None:
-        # Show short name only
-        short = fmt_str.split("(")[0].strip()
+        short = fmt_str.split("(")[0].strip().upper()
         self._fmt_lbl.setText(short)
         self._fmt_lbl.setToolTip(fmt_str)
 
     @pyqtSlot(str)
     def _on_error(self, msg: str) -> None:
         log.error("Player error: %s", msg)
-        self._fmt_lbl.setText("⚠ error")
+        self._fmt_lbl.setText("ERR")
         self._fmt_lbl.setToolTip(msg)
 
-    # ── Resize subtitle overlay ────────────────────────────────────────────
-
     def _on_video_resize(self, event: object) -> None:  # type: ignore[override]
-        QVideoWidget.resizeEvent(self._video, event)  # type: ignore[arg-type]
+        QVideoWidget.resizeEvent(self._video, event)     # type: ignore[arg-type]
         self._subtitle.resize(self._video.size())
-
-
-def _fmt(ms: int) -> str:
-    s = max(0, ms) // 1000
-    m, s = divmod(s, 60)
-    h, m = divmod(m, 60)
-    return f"{h}:{m:02}:{s:02}" if h else f"{m}:{s:02}"

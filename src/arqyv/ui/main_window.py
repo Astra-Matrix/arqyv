@@ -19,13 +19,16 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from PyQt6.QtCore import Qt, QSize, pyqtSlot
+import threading
+
+from PyQt6.QtCore import Qt, QSize, QThreadPool, pyqtSlot
 from PyQt6.QtGui import QAction, QKeySequence
 from PyQt6.QtWidgets import (
     QDockWidget,
     QFileDialog,
     QMainWindow,
     QSplitter,
+    QStackedWidget,
     QStatusBar,
     QToolBar,
     QWidget,
@@ -33,12 +36,13 @@ from PyQt6.QtWidgets import (
 
 from arqyv.config import AppConfig
 from arqyv.core.events import EventBus, Events
-from arqyv.ui.themes.dark import apply_dark_theme
+from arqyv.ui.themes.dark import apply_dark_theme, PALETTE as DARK_P
 from arqyv.ui.widgets.file_browser import FileBrowserWidget
 from arqyv.ui.widgets.media_player import MediaPlayerWidget
 from arqyv.ui.widgets.metadata_panel import MetadataPanelWidget
 from arqyv.ui.widgets.preview_panel import PreviewPanelWidget
 from arqyv.ui.widgets.search_bar import SearchBarWidget
+from arqyv.ui.widgets.search_results import SearchResultsWidget
 
 log = logging.getLogger(__name__)
 
@@ -48,22 +52,32 @@ class MainWindow(QMainWindow):
         self,
         config: AppConfig,
         events: EventBus,
-        services: dict[str, Any],
+        services: dict[str, Any] | None = None,
+        ctx: Any = None,
     ) -> None:
         super().__init__()
         self.config = config
         self.events = events
-        self.services = services
+        # Accept either a typed AppContext (Version A) or a plain dict (legacy).
+        if ctx is not None:
+            self.ctx = ctx
+            self.services: dict[str, Any] = ctx.as_services()
+        else:
+            self.ctx = None
+            self.services = services or {}
 
         self._selected_path: Path | None = None
         self._share_manager: Any | None = None
+        self._search_seq: int = 0
+        self._search_cancel: threading.Event = threading.Event()
 
         self._setup_window()
         self._build_ui()
         self._wire_engine()
         self._connect_events()
-        apply_dark_theme(self)
+        self._apply_theme()
         self._init_share_manager()
+        self._install_command_palette()
 
     # ── Window ─────────────────────────────────────────────────────────────
 
@@ -88,6 +102,7 @@ class MainWindow(QMainWindow):
         tb.setObjectName("mainToolbar")
 
         self._search_bar = SearchBarWidget(events=self.events, services=self.services)
+        self._search_bar.live_search_changed.connect(self._on_live_search)
         tb.addWidget(self._search_bar)
         tb.addSeparator()
 
@@ -99,18 +114,27 @@ class MainWindow(QMainWindow):
         self.addToolBar(Qt.ToolBarArea.TopToolBarArea, tb)
 
     def _build_docks(self) -> None:
-        # Left: file browser
+        # Left dock: stacked — page 0 = file browser, page 1 = live search results
         self._file_browser = FileBrowserWidget(
             config=self.config, events=self.events, services=self.services
         )
         self._file_browser.file_selected.connect(self._on_file_selected)
 
+        self._search_results = SearchResultsWidget()
+        self._search_results.file_selected.connect(self._on_file_selected)
+        self._search_results.file_activated.connect(self._on_file_activated)
+        self._search_results.request_clear.connect(self._on_search_clear)
+
+        self._left_stack = QStackedWidget()
+        self._left_stack.addWidget(self._file_browser)    # page 0
+        self._left_stack.addWidget(self._search_results)  # page 1
+
         left = QDockWidget("Library", self)
-        left.setWidget(self._file_browser)
+        left.setWidget(self._left_stack)
         left.setAllowedAreas(
             Qt.DockWidgetArea.LeftDockWidgetArea | Qt.DockWidgetArea.RightDockWidgetArea
         )
-        left.setMinimumWidth(220)
+        left.setMinimumWidth(240)
         self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, left)
 
         # Right: metadata / AI info panel
@@ -137,9 +161,17 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(outer)
 
     def _build_status_bar(self) -> None:
+        from arqyv.ui.themes.dark import PALETTE as P
         self._status = QStatusBar(self)
         self.setStatusBar(self._status)
-        self._status.showMessage("Ready  ·  ARQYV")
+
+        # Permanent right-side widgets
+        from PyQt6.QtWidgets import QLabel
+        self._api_indicator = QLabel(f"API  ·  127.0.0.1:{self.config.api_port}")
+        self._api_indicator.setStyleSheet(f"color: {P['text3']}; font-size: 11px; padding: 0 10px;")
+        self._status.addPermanentWidget(self._api_indicator)
+
+        self._status.showMessage("Ready")
 
     def _build_menu(self) -> None:
         mb = self.menuBar()
@@ -251,6 +283,58 @@ class MainWindow(QMainWindow):
             media_paths = [Path(p) for p in paths]
             self._player.open_playlist(media_paths, start=0)
 
+    # ── Live search ────────────────────────────────────────────────────────
+
+    @pyqtSlot(str)
+    def _on_live_search(self, query: str) -> None:
+        query = query.strip()
+        if not query:
+            self._on_search_clear()
+            return
+
+        # Cancel any in-flight search
+        self._search_cancel.set()
+        self._search_cancel = threading.Event()
+        self._search_seq += 1
+        seq = self._search_seq
+
+        # Switch left panel to results view
+        self._left_stack.setCurrentIndex(1)
+        self._search_results.prepare(query, seq)
+
+        # Resolve DB path from config URL
+        db_url = self.config.database_url
+        db_path = db_url.replace("sqlite+aiosqlite:///", "").replace("sqlite:///", "")
+
+        from arqyv.search.live_search import LiveSearchRunner
+        runner = LiveSearchRunner(
+            query=query,
+            db_path=db_path,
+            cancel=self._search_cancel,
+            seq=seq,
+        )
+        runner.signals.batch_ready.connect(self._search_results.append_batch)
+        runner.signals.finished.connect(self._search_results.finish)
+        QThreadPool.globalInstance().start(runner)
+
+    @pyqtSlot()
+    def _on_search_clear(self) -> None:
+        self._search_cancel.set()
+        self._left_stack.setCurrentIndex(0)
+        self._search_bar.clear_text()
+
+    @pyqtSlot(str)
+    def _on_file_activated(self, path: str) -> None:
+        """Double-click in results → play immediately."""
+        p = Path(path)
+        self._selected_path = p
+        self._preview.load_file(path)
+        self._metadata.load_file(path)
+        from arqyv.engine.format import detect, MediaKind
+        fmt = detect(p)
+        if fmt.kind in (MediaKind.VIDEO, MediaKind.AUDIO):
+            self._player.open_file(p)
+
     @pyqtSlot(str)
     def _on_file_selected(self, path: str) -> None:
         p = Path(path)
@@ -300,6 +384,31 @@ class MainWindow(QMainWindow):
     def _on_settings(self) -> None:
         from arqyv.ui.dialogs.settings_dialog import SettingsDialog
         SettingsDialog(config=self.config, parent=self).exec()
+
+    def _apply_theme(self) -> None:
+        theme = getattr(self.config, "theme", "dark")
+        if theme == "light":
+            from arqyv.ui.themes.light import apply_light_theme
+            apply_light_theme(self)
+        else:
+            apply_dark_theme(self)
+
+    def _install_command_palette(self) -> None:
+        from arqyv.ui.widgets.command_palette import Command, CommandPalette
+        commands = [
+            Command("Open Folder",       "Index a new media folder",                   self._on_open_folder,   "Ctrl+O"),
+            Command("Open Files",        "Open specific files for playback",            self._on_open_files,    "Ctrl+Shift+O"),
+            Command("Share File",        "Share selected file via QR / LAN",            self._on_share,         "Ctrl+Shift+S"),
+            Command("Settings",          "Open application settings",                   self._on_settings),
+            Command("Play / Pause",      "Toggle media playback",                       lambda: self._player.engine and self._player.engine.toggle(), "Space"),
+            Command("Next Track",        "Skip to next item in playlist",               lambda: self._player.engine and self._player.engine.play_next(), "]"),
+            Command("Previous Track",    "Go back to previous item",                    lambda: self._player.engine and self._player.engine.play_previous(), "["),
+            Command("Stop",              "Stop playback",                               lambda: self._player.engine and self._player.engine.stop(), "S"),
+            Command("Batch Rename",      "Rename multiple files at once",               self._on_batch_rename),
+            Command("Cloud Sync",        "Manage cloud storage sync",                   self._on_cloud_sync),
+            Command("Quit",              "Exit ARQYV",                                  self.close,             "Ctrl+Q"),
+        ]
+        CommandPalette.install(self, commands)
 
     def closeEvent(self, event: Any) -> None:  # type: ignore[override]
         if self._share_manager:

@@ -1,0 +1,158 @@
+version: "3.9"
+
+x-logging: &json-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-healthcheck-defaults: &hc-defaults
+  interval: 15s
+  timeout: 5s
+  retries: 4
+  start_period: 10s
+
+services:
+
+  # ── Infrastructure ──────────────────────────────────────────────────────────
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      <<: *hc-defaults
+      test: ["CMD", "redis-cli", "ping"]
+    logging: *json-logging
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       arqyv
+      POSTGRES_USER:     arqyv
+      POSTGRES_PASSWORD: ${ARQYV_DB_PASSWORD:?set ARQYV_DB_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      <<: *hc-defaults
+      test: ["CMD-SHELL", "pg_isready -U arqyv"]
+    logging: *json-logging
+
+  # ── Alembic — runs once, then exits ────────────────────────────────────────
+
+  migrate:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://arqyv:${ARQYV_DB_PASSWORD}@db/arqyv
+    depends_on:
+      db: { condition: service_healthy }
+    logging: *json-logging
+
+  # ── Application services ────────────────────────────────────────────────────
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://arqyv:${ARQYV_DB_PASSWORD}@db/arqyv
+      REDIS_URL:    redis://redis:6379/0
+      LOG_LEVEL:    ${LOG_LEVEL:-INFO}
+    depends_on:
+      db:      { condition: service_healthy }
+      redis:   { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      <<: *hc-defaults
+      test: ["CMD-SHELL", "curl -sf http://localhost:8000/health || exit 1"]
+    logging: *json-logging
+
+  indexer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    restart: on-failure
+    command: ["python", "-m", "arqyv.workers.indexer_worker"]
+    environment:
+      DATABASE_URL:         postgresql+asyncpg://arqyv:${ARQYV_DB_PASSWORD}@db/arqyv
+      REDIS_URL:            redis://redis:6379/0
+      ARQYV_WATCH_PATH:     ${ARQYV_LIBRARY_PATH:-/library}
+    volumes:
+      - ${ARQYV_LIBRARY_PATH:-./library}:/library:ro
+    depends_on:
+      db:      { condition: service_healthy }
+      redis:   { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 10
+    logging: *json-logging
+
+  search:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    restart: unless-stopped
+    command: ["python", "-m", "arqyv.workers.search_worker"]
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://arqyv:${ARQYV_DB_PASSWORD}@db/arqyv
+      REDIS_URL:    redis://redis:6379/0
+    depends_on:
+      db:      { condition: service_healthy }
+      redis:   { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    healthcheck:
+      <<: *hc-defaults
+      test: ["CMD-SHELL", "curl -sf http://localhost:8001/health || exit 1"]
+    logging: *json-logging
+
+  ai:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    restart: unless-stopped
+    command: ["python", "-m", "arqyv.workers.ai_worker"]
+    environment:
+      DATABASE_URL:     postgresql+asyncpg://arqyv:${ARQYV_DB_PASSWORD}@db/arqyv
+      REDIS_URL:        redis://redis:6379/0
+      OPENAI_API_KEY:   ${OPENAI_API_KEY:-}
+      AI_WORKER_POOL:   "4"
+    depends_on:
+      db:      { condition: service_healthy }
+      redis:   { condition: service_healthy }
+      migrate: { condition: service_completed_successfully }
+    logging: *json-logging
+
+  # ── Desktop UI (Linux / headless with X11 forwarding) ─────────────────────
+
+  ui:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.ui
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      DISPLAY:       ${DISPLAY:-:0}
+      API_BASE_URL:  http://localhost:8000
+      REDIS_URL:     redis://localhost:6379/0
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    depends_on:
+      api: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  redisdata:

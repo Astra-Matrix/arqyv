@@ -1,277 +1,175 @@
 # ARQYV
 
-**The last great desktop application — personal data unification, done right.**
+**AI-Powered Personal Media Library** — search, play, organize, and share every file you own, on every device, forever.
 
-> Cross-platform · PyQt6 · Custom Media Engine · Semantic AI Search · P2P Sharing · Local-first · No accounts
-
-ARQYV unifies every file you own — video, audio, documents, photos — across local storage and cloud providers into a single, intelligent, searchable library. It plays anything, understands everything, and lets you share instantly.
+[![Build](https://github.com/Alaustrup/arqyv/actions/workflows/build.yml/badge.svg)](https://github.com/Alaustrup/arqyv/actions/workflows/build.yml)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://python.org)
+[![PyQt6](https://img.shields.io/badge/UI-PyQt6-green)](https://pypi.org/project/PyQt6)
+[![License: MIT](https://img.shields.io/badge/license-MIT-orange)](LICENSE)
 
 ---
 
-## Feature Overview
+## What is ARQYV?
 
-| Feature | Status |
+ARQYV is a cross-platform desktop application that turns your local file collection into a fully-searchable, AI-understood personal media vault. It indexes every video, audio track, image, and document; enriches them with AI-generated tags, summaries, and embeddings; and surfaces exactly what you need in milliseconds — with or without an internet connection.
+
+### Core capabilities
+
+| Capability | Details |
 |---|---|
-| Cross-platform desktop (Windows / macOS / Linux) | ✅ |
-| **ARQYVMediaEngine** — custom media layer, zero external installs | ✅ |
-| Magic-byte format detector (40+ formats, pure Python) | ✅ |
-| Subtitle engine: SRT / VTT / ASS — pure Python parser + Qt overlay | ✅ |
-| Playlist: shuffle, repeat, **smart resume** (remembers position) | ✅ |
-| Audio DSP: EQ presets, peak metering | ✅ |
-| Qt Multimedia (primary) + VLC (auto-detected upgrade, zero config) | ✅ |
-| **ARQYVShare** — instant P2P file sharing, no accounts, no subscriptions | ✅ |
-| One-click QR code share → scan on any device, download starts | ✅ |
-| LAN peer discovery via mDNS / zeroconf | ✅ |
-| Semantic search (sentence-transformers + ChromaDB vector DB) | ✅ |
-| Filter tokens: `type:video size:>100mb date:>2024 tag:holiday` | ✅ |
-| AI content analysis: image captioning, audio/video transcription, NLP | ✅ |
-| Voice search (local Whisper — no cloud, no API key) | ✅ |
-| Smart metadata extraction (magic bytes, mutagen, EXIF, PDF, MediaInfo) | ✅ |
-| Batch rename engine with template tokens | ✅ |
-| Cloud sync: Google Drive, OneDrive, Dropbox (OAuth2) | ✅ |
-| File system watcher — auto-indexes on file change | ✅ |
-| Thumbnail cache (video frames, audio cover art, PDF pages, images) | ✅ |
-| Mobile scaffold: Flutter + React Native | ✅ |
-| CI matrix: Windows / macOS / Linux × Python 3.11 / 3.12 | ✅ |
-| PyInstaller + Nuitka build pipeline | ✅ |
+| **Smart search** | Semantic (Chroma vector DB) + BM25 keyword + SQLite full-text, merged and ranked |
+| **Live search** | Results appear as you type — no Enter required |
+| **AI analysis** | Auto-tagging via NLP, image captioning via BLIP, speech transcription via Whisper |
+| **Custom media engine** | Qt Multimedia primary; optional VLC upgrade; zero proprietary dependencies |
+| **Peer-to-peer sharing** | Instant LAN share with QR code, mDNS discovery, HTTP streaming |
+| **Smart collections** | Auto-generated groups by type, year, and AI tag clusters |
+| **Content deduplication** | SHA-256 exact + perceptual hash (pHash) near-duplicate detection |
+| **Plugin system** | Drop in any entry-point plugin to extend metadata, tagging, or post-processing |
+| **Local REST API** | FastAPI server on port 8765 — drive ARQYV from scripts or a Flutter mobile app |
+| **WebSocket bridge** | Real-time push events for mobile clients and dashboards |
+| **Cloud sync** | Google Drive, OneDrive, Dropbox (OAuth keys via environment variables) |
+| **Voice search** | Speak a query; Whisper transcribes and searches |
+| **Command palette** | Press Ctrl+P for keyboard-first access to every action |
+| **Light & dark themes** | Full theme system; toggle in Settings |
 
 ---
 
-## Project Structure
+## Quick start
 
-```
-ARQYV/
-├── src/arqyv/
-│   ├── main.py              # CLI entry point
-│   ├── config.py            # Pydantic settings (env-driven)
-│   ├── core/
-│   │   ├── app.py           # Service orchestrator / lifecycle
-│   │   ├── events.py        # Pub/sub EventBus
-│   │   └── settings.py      # Persistent user preferences (JSON)
-│   ├── ui/
-│   │   ├── main_window.py   # QMainWindow with dock layout
-│   │   ├── widgets/         # search bar, file browser, media player, preview, metadata
-│   │   ├── dialogs/         # settings, batch rename, cloud sync
-│   │   └── themes/          # dark.py (charcoal + teal), light.py
-│   ├── backend/
-│   │   ├── indexer.py       # ThreadPoolExecutor-based directory scanner
-│   │   ├── watcher.py       # watchdog FS event handler
-│   │   ├── thumbnail.py     # VLC/Pillow/PyMuPDF thumbnail generator + disk cache
-│   │   └── transcoder.py    # ffmpeg wrapper for format conversion
-│   ├── ai/
-│   │   ├── analyzer.py      # Orchestrator (singleton) with lazy model loading
-│   │   ├── embedder.py      # sentence-transformers semantic embeddings
-│   │   ├── tagger.py        # spaCy NLP → entity + keyword tags
-│   │   ├── voice_search.py  # sounddevice recorder + Whisper transcription
-│   │   └── summarizer.py    # Extractive summarizer (no GPU required)
-│   ├── search/
-│   │   ├── engine.py        # Unified search (semantic + full-text + filters)
-│   │   ├── semantic.py      # ChromaDB vector store wrapper
-│   │   └── filters.py       # Query token parser (type:, ext:, size:, date:, tag:)
-│   ├── database/
-│   │   ├── db.py            # Async SQLAlchemy 2.x + aiosqlite
-│   │   ├── models.py        # MediaFile, Tag, WatchedFolder, SearchHistory
-│   │   └── migrations/      # Alembic environment
-│   ├── cloud/
-│   │   ├── base.py          # CloudProvider ABC
-│   │   ├── gdrive.py        # Google Drive (OAuth2 + Drive API v3)
-│   │   ├── onedrive.py      # OneDrive (MSAL + Graph API)
-│   │   └── dropbox_provider.py
-│   ├── engine/              # ARQYVMediaEngine — custom media layer
-│   │   ├── core.py          # Central engine: orchestrates backend + playlist + DSP
-│   │   ├── format.py        # Magic-byte format detector (40+ formats, pure Python)
-│   │   ├── subtitle.py      # SRT/VTT/ASS parser + SubtitleOverlay Qt widget
-│   │   ├── playlist.py      # Shuffle, repeat, smart resume (persists position)
-│   │   └── audio_dsp.py     # EQ presets, peak metering
-│   ├── media/
-│   │   ├── player.py        # PlayerBackend protocol + factory (Qt / VLC)
-│   │   ├── _qt_backend.py   # Qt Multimedia backend (zero dependencies)
-│   │   ├── _vlc_backend.py  # VLC backend (auto-detected, optional)
-│   │   ├── vlc_setup.py     # VLC auto-discovery (registry, paths, DLL injection)
-│   │   ├── metadata.py      # MediaInfo + mutagen + EXIF + PyMuPDF extractor
-│   │   └── codec_manager.py # Runtime codec availability check
-│   ├── share/               # ARQYVShare — P2P file sharing
-│   │   ├── server.py        # Ephemeral stdlib HTTP server with token auth
-│   │   ├── discovery.py     # mDNS/zeroconf LAN peer discovery
-│   │   ├── qr.py            # QR code → QPixmap generator
-│   │   └── manager.py       # ShareManager public API
-│   └── utils/
-│       ├── logger.py        # Rich console + rotating file log
-│       ├── batch_rename.py  # Template engine ({name}, {date}, {counter}, …)
-│       ├── file_ops.py      # Safe delete (trash), copy, move, unique path
-│       └── platform_utils.py
-├── mobile/
-│   ├── flutter/             # Flutter scaffold (iOS + Android)
-│   └── react_native/        # RN scaffold (alternative)
-├── tests/
-│   ├── test_core/           # EventBus, settings
-│   ├── test_search/         # Filter parser, semantic
-│   ├── test_ai/             # Summarizer, tagger
-│   └── test_database/       # DB CRUD integration tests
-├── scripts/
-│   ├── setup_dev.py         # One-shot dev environment bootstrap
-│   └── build.py             # PyInstaller cross-platform build
-├── .github/workflows/
-│   ├── ci.yml               # Test matrix: Win + macOS + Linux × Python 3.11/3.12
-│   └── release.yml          # Tag-triggered binary release
-├── pyproject.toml
-├── requirements.txt
-├── requirements-dev.txt
-├── alembic.ini
-└── .env.example
-```
+### Requirements
+- Python 3.11 or later
+- Windows 10+, macOS 12+, or Ubuntu 22.04+
 
----
-
-## Quick Start
-
-### Prerequisites
-
-- Python 3.11+
-- Nothing else required — media playback works out of the box via Qt Multimedia (bundled with PyQt6), using OS-native codecs (Windows Media Foundation / AVFoundation / GStreamer).
-- **Optional:** Install [VLC](https://www.videolan.org/vlc/) for extended codec support (H.265, AV1, MKV, AC3, DTS…). Auto-detected at startup — no config needed.
-- **Optional:** [MediaInfo](https://mediaarea.net/en/MediaInfo) CLI for deeper technical metadata extraction.
-- **Optional:** ffmpeg for format transcoding.
-
-### 1. Clone and set up dev environment
+### Install from source
 
 ```bash
 git clone https://github.com/Alaustrup/arqyv.git
 cd arqyv
-
-# Automated setup (installs deps, spaCy model, pre-commit hooks)
-python scripts/setup_dev.py
+python -m pip install -e ".[dev]"
 ```
 
-### 2. Configure
+### Launch
 
 ```bash
-cp .env.example .env
-# Edit .env – cloud credentials, AI model sizes, etc.
+# Windows (recommended — suppresses console)
+launch.bat
+
+# Any platform
+python run.py
+
+# With optional arguments
+python run.py --debug          # verbose logging
+python run.py --no-ai          # skip AI analysis
+python run.py --no-api         # skip REST API server
 ```
 
-### 3. Run
+### First run
 
-```bash
-arqyv
-# or with debug logging:
-arqyv --debug
+1. ARQYV opens and prompts you to add a watched folder.
+2. Go to **Settings → Library → Add Folder** and pick your media directory.
+3. Indexing runs in the background — watch the status bar for progress.
+4. Start typing in the search bar to find anything instantly.
+
+---
+
+## Project structure
+
+```
+arqyv/
+├── run.py                  # Monolith launcher
+├── launch.bat              # Windows launcher (windowless)
+├── arqyv.spec              # PyInstaller build spec
+├── pyproject.toml
+├── src/arqyv/
+│   ├── ai/                 # Embedder, tagger, summarizer, voice search
+│   ├── api/                # FastAPI app, routes, WebSocket bridge
+│   ├── backend/            # Indexer, FileWatcher, thumbnails, collections, dedup
+│   ├── config.py           # Pydantic settings (env var overrides)
+│   ├── core/               # EventBus, Redis pub/sub (Version B)
+│   ├── database/           # SQLAlchemy models, async DB, Alembic migrations
+│   ├── engine/             # Custom media engine, audio DSP, EQ presets
+│   ├── media/              # Metadata extractor, thumbnail generator
+│   ├── plugins/            # Plugin base classes and registry
+│   ├── search/             # SearchEngine, SemanticSearch, BM25, filters
+│   ├── share/              # P2P share server, mDNS discovery, QR code
+│   ├── ui/
+│   │   ├── dialogs/        # Settings, share, batch rename
+│   │   ├── themes/         # dark.py, light.py
+│   │   └── widgets/        # Search bar, media player, file browser, …
+│   └── workers/            # Microservice entry-points (Version B / Docker)
+├── docs/
+│   ├── user-manual.md
+│   └── getting-started.md
+└── .github/workflows/
+    └── build.yml           # Win/Mac/Linux PyInstaller matrix
 ```
 
 ---
 
 ## Configuration
 
-All settings are driven by environment variables (or `.env`) with the `ARQYV_` prefix.
-See `.env.example` for the full list.
-
-Key options:
+All settings can be overridden by environment variables. Prefix: `ARQYV_`.
 
 | Variable | Default | Description |
 |---|---|---|
 | `ARQYV_THEME` | `dark` | `dark` or `light` |
-| `ARQYV_ENABLE_AI` | `true` | Toggle AI analysis pipeline |
-| `ARQYV_AI_WHISPER_MODEL` | `base` | Whisper model size (`tiny`→`large`) |
+| `ARQYV_ENABLE_AI` | `true` | Enable AI analysis |
+| `ARQYV_ENABLE_API_SERVER` | `true` | Start REST API on port 8765 |
+| `ARQYV_API_PORT` | `8765` | REST/WebSocket port |
+| `ARQYV_AI_WHISPER_MODEL` | `base` | Whisper model size |
 | `ARQYV_AI_DEVICE` | `auto` | `cpu`, `cuda`, `mps`, or `auto` |
-| `ARQYV_ENABLE_CLOUD_SYNC` | `false` | Enable cloud provider integrations |
-| `ARQYV_DB_URL` | _(auto)_ | Override SQLite path or use PostgreSQL |
+| `DATABASE_URL` | SQLite | Override with Postgres for Version B |
+| `REDIS_URL` | `redis://localhost:6379/0` | Redis for microservice mode |
+| `ARQYV_CLOUD_GOOGLE_CLIENT_ID` | — | Google Drive OAuth |
+| `ARQYV_CLOUD_ONEDRIVE_CLIENT_ID` | — | OneDrive OAuth |
+| `ARQYV_CLOUD_DROPBOX_APP_KEY` | — | Dropbox OAuth |
+
+See `src/arqyv/config.py` for all available settings.
 
 ---
 
-## Search Syntax
+## Building distributable binaries
 
-ARQYV supports natural-language queries enriched with filter tokens:
-
-```
-beach sunset type:video date:>2024-01 size:<500mb
-holiday portrait type:image tag:family
-interview ext:.mp4 date:>2023-06-01
+```bash
+pip install pyinstaller
+pyinstaller arqyv.spec --clean --noconfirm
+# Output: dist/ARQYV/
 ```
 
-| Token | Example | Description |
+CI builds for Win/Mac/Linux are triggered on any `v*.*.*` tag push.
+
+---
+
+## Extending with plugins
+
+Create a package, subclass `MetadataPlugin`, `TaggerPlugin`, or `PostProcessPlugin`, and register it:
+
+```toml
+[project.entry-points."arqyv.plugins"]
+my_plugin = "my_package.plugin:MyPlugin"
+```
+
+Then `pip install` your package and ARQYV discovers it automatically at launch.
+
+---
+
+## REST API
+
+The local API runs at `http://localhost:8765` when `ARQYV_ENABLE_API_SERVER=true`.
+
+| Endpoint | Method | Description |
 |---|---|---|
-| `type:` | `type:video` | Filter by media type group |
-| `ext:` | `ext:.flac` | Exact file extension |
-| `size:` | `size:>50mb` | File size comparison |
-| `date:` | `date:>2024-01` | Modification date comparison |
-| `tag:` | `tag:vacation` | AI-generated tag contains |
+| `/api/v1/library` | GET | Paginated file listing |
+| `/api/v1/files/{id}` | GET | Single file details |
+| `/api/v1/search?q=…` | GET | Unified search |
+| `/api/v1/thumbnails/{id}` | GET | JPEG thumbnail |
+| `/api/v1/stream/{id}` | GET | HTTP range-request media stream |
+| `/ws` | WebSocket | Real-time events (index progress, playback state) |
 
----
-
-## AI Pipeline
-
-1. **Indexer** scans files and submits to AI queue (non-blocking).
-2. **MetadataExtractor** pulls technical data (resolution, duration, codec).
-3. **AIAnalyzer** routes by file type:
-   - **Image** → BLIP image captioning (HuggingFace)
-   - **Video/Audio** → Whisper transcription
-   - **PDF/DOCX** → direct text extraction
-4. **Embedder** produces 384-dim sentence-transformer vectors.
-5. **Tagger** uses spaCy NER + noun chunks for keyword extraction.
-6. **Summarizer** generates an extractive summary (no GPU needed).
-7. Vectors are stored in **ChromaDB** for sub-100ms semantic search.
-
----
-
-## Building Standalone Executables
-
-```bash
-# Windows
-python scripts/build.py --platform win
-
-# macOS
-python scripts/build.py --platform mac
-
-# Linux
-python scripts/build.py --platform linux
-```
-
-Output: `dist/ARQYV/` – a self-contained directory ready for distribution.
-
----
-
-## Running Tests
-
-```bash
-pytest tests/ -v --cov=src/arqyv
-```
-
-CI runs the full matrix across Windows, macOS, and Linux on Python 3.11 and 3.12.
-
----
-
-## Database Migrations
-
-```bash
-# Apply all pending migrations
-alembic upgrade head
-
-# Generate a new migration after model changes
-alembic revision --autogenerate -m "add new column"
-```
-
----
-
-## Mobile Client
-
-See [`mobile/README.md`](mobile/README.md) for the Flutter and React Native scaffold.
-The mobile clients connect to an ARQYV API server (FastAPI, to be implemented)
-at `localhost:8765`.
-
----
-
-## Roadmap
-
-- [ ] FastAPI local API server (enable mobile + remote control)
-- [ ] GPU-accelerated AI inference (CUDA / MPS auto-detection)
-- [ ] Duplicate detection (perceptual hashing)
-- [ ] Face recognition clustering
-- [ ] IPTC/XMP metadata write-back
-- [ ] Advanced timeline view
-- [ ] Plugin system
+Full OpenAPI docs: `http://localhost:8765/docs`
 
 ---
 
 ## License
 
-MIT © Alaustrup
+MIT © 2025 Alaustrup

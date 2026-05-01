@@ -37,7 +37,8 @@ async def get_thumbnail(file_id: int, services: dict[str, Any] = Depends(get_ser
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Source file not found on disk")
 
-    if row.media_type == "image":
+    is_image = (row.mime_type or "").startswith("image/") or (row.extension in (".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp", ".tiff", ".heic"))
+    if is_image:
         try:
             from PIL import Image
             import io

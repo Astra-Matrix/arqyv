@@ -69,15 +69,18 @@ class AIAnalyzer:
             text_content = self._extract_text_content(path, suffix)
 
             if text_content:
+                import json
                 embedding = self._get_embedder().embed_text(text_content)
                 tags = self._get_tagger().tag_text(text_content)
                 summary = self._get_summarizer().summarize(text_content)
+                # Store tags as JSON array — MediaFile.get_tags() expects this format
                 result["ai"] = {
-                    "tags": ", ".join(tags),
-                    "summary": summary,
+                    "tags":      json.dumps(tags),   # JSON array, not comma-string
+                    "summary":   summary,
                     "embedding_dim": len(embedding),
                 }
                 result["embedding"] = embedding
+                result["tags_list"] = tags           # convenience for callers
 
             self.events.emit(Events.AI_ANALYSIS_DONE, path=str(path), metadata=result)
         except Exception:

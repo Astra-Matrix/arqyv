@@ -1,4 +1,4 @@
-"""Search endpoint — unified semantic + full-text + filter query."""
+"""Search endpoint — unified semantic + BM25 + full-text + filter query."""
 
 from __future__ import annotations
 
@@ -17,10 +17,10 @@ def get_search(request: Request) -> Any:
 class SearchResult(BaseModel):
     id: int
     path: str
-    name: str
-    media_type: str | None
+    filename: str
+    mime_type: str | None
     score: float
-    ai_caption: str | None
+    ai_summary: str | None
     ai_tags: list[str]
     thumbnail_url: str
 
@@ -33,21 +33,21 @@ class SearchResponse(BaseModel):
 
 @router.get("/search", response_model=SearchResponse)
 async def search(
-    q: str = Query(..., min_length=1, description="Natural language query with optional filter tokens"),
+    q: str = Query(..., min_length=1, description="Natural-language query with optional filter tokens"),
     limit: int = Query(30, ge=1, le=100),
     search_engine: Any = Depends(get_search),
 ) -> SearchResponse:
-    raw = await search_engine.query(q, limit=limit)
+    raw = await search_engine.search_async(q, limit=limit)
 
     results = [
         SearchResult(
             id=r.id,
             path=r.path,
-            name=r.name,
-            media_type=r.media_type,
+            filename=r.filename,
+            mime_type=r.mime_type,
             score=getattr(r, "score", 1.0),
-            ai_caption=r.ai_caption,
-            ai_tags=r.ai_tags or [],
+            ai_summary=r.ai_summary,
+            ai_tags=r.get_tags() if hasattr(r, "get_tags") else [],
             thumbnail_url=f"/api/v1/thumbnails/{r.id}",
         )
         for r in raw

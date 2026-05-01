@@ -1,4 +1,6 @@
-"""File browser sidebar with tree + grid/list toggle view."""
+"""
+File browser sidebar — clean tree with icon-only view toggle.
+"""
 
 from __future__ import annotations
 
@@ -11,9 +13,9 @@ from PyQt6.QtGui import QFileSystemModel
 from PyQt6.QtWidgets import (
     QAbstractItemView,
     QHBoxLayout,
+    QLabel,
     QListView,
     QPushButton,
-    QSplitter,
     QTreeView,
     QVBoxLayout,
     QWidget,
@@ -21,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 from arqyv.config import AppConfig
 from arqyv.core.events import EventBus, Events
+from arqyv.ui.themes.dark import PALETTE as P
 
 log = logging.getLogger(__name__)
 
@@ -42,83 +45,131 @@ class FileBrowserWidget(QWidget):
         self._build_ui()
 
     def _build_ui(self) -> None:
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(0)
 
-        # View toggle toolbar
-        toggle_row = QHBoxLayout()
-        self._tree_btn = QPushButton("Tree")
-        self._grid_btn = QPushButton("Grid")
-        self._list_btn = QPushButton("List")
-        for btn in (self._tree_btn, self._grid_btn, self._list_btn):
-            btn.setCheckable(True)
-            btn.setFixedHeight(24)
-            toggle_row.addWidget(btn)
-        self._tree_btn.setChecked(True)
-        toggle_row.addStretch()
+        # ── Header bar ─────────────────────────────────────────────────────
+        hdr = QWidget()
+        hdr.setFixedHeight(38)
+        hdr.setStyleSheet(f"background: {P['bg1']}; border-bottom: 1px solid {P['border']};")
+        hl = QHBoxLayout(hdr)
+        hl.setContentsMargins(12, 0, 8, 0)
+        hl.setSpacing(4)
 
-        self._tree_btn.clicked.connect(lambda: self._set_view("tree"))
-        self._grid_btn.clicked.connect(lambda: self._set_view("grid"))
-        self._list_btn.clicked.connect(lambda: self._set_view("list"))
+        title = QLabel("LIBRARY")
+        title.setStyleSheet(f"color: {P['text3']}; font-size: 10px; font-weight: 700; letter-spacing: 0.14em;")
+        hl.addWidget(title)
+        hl.addStretch()
 
-        layout.addLayout(toggle_row)
+        # View toggle — icon-only buttons
+        self._v_tree = self._toggle_btn("≡", "tree",  "Tree view")
+        self._v_list = self._toggle_btn("☰", "list",  "List view")
+        self._v_grid = self._toggle_btn("⊞", "grid",  "Grid view")
+        self._v_tree.setChecked(True)
+        hl.addWidget(self._v_tree)
+        hl.addWidget(self._v_list)
+        hl.addWidget(self._v_grid)
+        root.addWidget(hdr)
 
-        # File system model
-        self._fs_model = QFileSystemModel()
-        self._fs_model.setRootPath("")
+        # ── File system model ──────────────────────────────────────────────
+        self._fs = QFileSystemModel()
+        self._fs.setRootPath("")
 
         # Tree view
-        self._tree_view = QTreeView()
-        self._tree_view.setModel(self._fs_model)
-        self._tree_view.setRootIndex(self._fs_model.index(""))
-        self._tree_view.hideColumn(1)
-        self._tree_view.hideColumn(2)
-        self._tree_view.hideColumn(3)
-        self._tree_view.clicked.connect(self._on_tree_clicked)
-        self._tree_view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self._tree = QTreeView()
+        self._tree.setModel(self._fs)
+        self._tree.setRootIndex(self._fs.index(""))
+        self._tree.hideColumn(1)
+        self._tree.hideColumn(2)
+        self._tree.hideColumn(3)
+        self._tree.header().hide()
+        self._tree.setIndentation(14)
+        self._tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self._tree.setAnimated(True)
+        self._tree.clicked.connect(lambda i: self._emit(self._fs.filePath(i)))
+        self._tree.setStyleSheet(f"""
+            QTreeView {{
+                background: {P['bg1']};
+                border: none;
+                font-size: 13px;
+            }}
+            QTreeView::item {{
+                padding: 4px 4px 4px 2px;
+                border-radius: 4px;
+                color: {P['text2']};
+            }}
+            QTreeView::item:hover {{ background: {P['bg3']}; color: {P['text']}; }}
+            QTreeView::item:selected {{
+                background: {P['bg4']};
+                color: {P['text']};
+                border-left: 2px solid {P['cyan']};
+            }}
+        """)
 
-        # List/grid view (icon mode = grid, list mode = list)
-        self._list_view = QListView()
-        self._list_view.setModel(self._fs_model)
-        self._list_view.setViewMode(QListView.ViewMode.IconMode)
-        self._list_view.setResizeMode(QListView.ResizeMode.Adjust)
-        self._list_view.setGridSize(QSize(100, 100))
-        self._list_view.hide()
-        self._list_view.clicked.connect(self._on_list_clicked)
+        # List / grid view
+        self._grid_view = QListView()
+        self._grid_view.setModel(self._fs)
+        self._grid_view.setViewMode(QListView.ViewMode.IconMode)
+        self._grid_view.setResizeMode(QListView.ResizeMode.Adjust)
+        self._grid_view.setGridSize(QSize(90, 90))
+        self._grid_view.setSpacing(4)
+        self._grid_view.hide()
+        self._grid_view.clicked.connect(lambda i: self._emit(self._fs.filePath(i)))
+        self._grid_view.setStyleSheet(f"""
+            QListView {{
+                background: {P['bg1']};
+                border: none;
+                font-size: 11px;
+            }}
+            QListView::item {{
+                padding: 4px;
+                border-radius: 6px;
+                color: {P['text2']};
+            }}
+            QListView::item:hover {{ background: {P['bg3']}; color: {P['text']}; }}
+            QListView::item:selected {{ background: {P['bg4']}; color: {P['text']}; }}
+        """)
 
-        layout.addWidget(self._tree_view, 1)
-        layout.addWidget(self._list_view, 1)
+        root.addWidget(self._tree, 1)
+        root.addWidget(self._grid_view, 1)
+
+    def _toggle_btn(self, text: str, mode: str, tip: str) -> QPushButton:
+        b = QPushButton(text)
+        b.setFixedSize(26, 26)
+        b.setCheckable(True)
+        b.setToolTip(tip)
+        b.setObjectName("ghost")
+        b.clicked.connect(lambda: self._set_view(mode))
+        return b
 
     def _set_view(self, mode: str) -> None:
-        for btn, name in ((self._tree_btn, "tree"), (self._grid_btn, "grid"), (self._list_btn, "list")):
-            btn.setChecked(name == mode)
+        self._v_tree.setChecked(mode == "tree")
+        self._v_list.setChecked(mode == "list")
+        self._v_grid.setChecked(mode == "grid")
 
         if mode == "tree":
-            self._tree_view.show()
-            self._list_view.hide()
-        elif mode == "grid":
-            self._tree_view.hide()
-            self._list_view.setViewMode(QListView.ViewMode.IconMode)
-            self._list_view.show()
+            self._tree.show()
+            self._grid_view.hide()
         elif mode == "list":
-            self._tree_view.hide()
-            self._list_view.setViewMode(QListView.ViewMode.ListMode)
-            self._list_view.show()
+            self._tree.hide()
+            self._grid_view.setViewMode(QListView.ViewMode.ListMode)
+            self._grid_view.setGridSize(QSize(0, 0))
+            self._grid_view.show()
+        elif mode == "grid":
+            self._tree.hide()
+            self._grid_view.setViewMode(QListView.ViewMode.IconMode)
+            self._grid_view.setGridSize(QSize(90, 90))
+            self._grid_view.show()
 
-    def _on_tree_clicked(self, index: QModelIndex) -> None:
-        path = self._fs_model.filePath(index)
-        self._emit_selection(path)
-
-    def _on_list_clicked(self, index: QModelIndex) -> None:
-        path = self._fs_model.filePath(index)
-        self._emit_selection(path)
-
-    def _emit_selection(self, path: str) -> None:
-        self.file_selected.emit(path)
-        self.events.emit(Events.FILE_ADDED, path=path)
-        log.debug("Selected: %s", path)
+    def _emit(self, path: str) -> None:
+        if path:
+            self.file_selected.emit(path)
+            self.events.emit(Events.FILE_ADDED, path=path)
+            log.debug("Selected: %s", path)
 
     def navigate_to(self, path: str) -> None:
-        idx = self._fs_model.index(path)
-        self._tree_view.setCurrentIndex(idx)
-        self._tree_view.scrollTo(idx)
+        idx = self._fs.index(path)
+        self._tree.setCurrentIndex(idx)
+        self._tree.scrollTo(idx)
+        self._tree.expand(idx)

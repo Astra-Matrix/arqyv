@@ -1,0 +1,26 @@
+# ── Base ──────────────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS base
+
+WORKDIR /app
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ffmpeg \
+      libvlc-dev \
+      vlc \
+      curl \
+ && rm -rf /var/lib/apt/lists/*
+
+# ── Dependencies ──────────────────────────────────────────────────────────────
+COPY requirements/worker.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ── Source ────────────────────────────────────────────────────────────────────
+COPY src/ ./src/
+
+ENV PYTHONPATH=/app/src \
+    PYTHONUTF8=1 \
+    PYTHONUNBUFFERED=1
+
+# Default entrypoint — overridden per-service in docker-compose.yml
+CMD ["python", "-m", "arqyv.workers.indexer_worker"]

@@ -1,11 +1,8 @@
-"""ARQYV API server — FastAPI application factory and lifecycle manager.
-
-Run standalone:  python -m arqyv --api
-Embedded mode:   APIServer(services).start() in a background thread.
-"""
+"""ARQYV API server — FastAPI application factory and lifecycle manager."""
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import threading
 from typing import Any
@@ -21,7 +18,12 @@ DEFAULT_PORT = 8765
 
 
 class APIServer:
-    """Runs the FastAPI app in a daemon thread alongside the Qt event loop."""
+    """Runs the FastAPI app in a daemon thread alongside the Qt event loop.
+
+    The uvicorn thread creates its own asyncio event loop. We capture that
+    loop and expose it via `self.loop` so the WebSocketBridge can schedule
+    coroutines onto it from the Qt main thread.
+    """
 
     def __init__(self, services: dict[str, Any], host: str = DEFAULT_HOST, port: int = DEFAULT_PORT) -> None:
         self._services = services
@@ -29,6 +31,14 @@ class APIServer:
         self._port = port
         self._thread: threading.Thread | None = None
         self._server: uvicorn.Server | None = None
+        self._loop: asyncio.AbstractEventLoop | None = None
+        self._loop_ready = threading.Event()
+
+    @property
+    def loop(self) -> asyncio.AbstractEventLoop | None:
+        """The uvicorn event loop. Available after start() returns."""
+        self._loop_ready.wait(timeout=5)
+        return self._loop
 
     def start(self) -> None:
         app = create_app(self._services)
@@ -41,11 +51,14 @@ class APIServer:
         )
         self._server = uvicorn.Server(config)
 
-        self._thread = threading.Thread(
-            target=self._server.run,
-            name="arqyv-api",
-            daemon=True,
-        )
+        def _run() -> None:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            self._loop = loop
+            self._loop_ready.set()
+            loop.run_until_complete(self._server.serve())
+
+        self._thread = threading.Thread(target=_run, name="arqyv-api", daemon=True)
         self._thread.start()
         log.info("ARQYV API server started at http://%s:%d", self._host, self._port)
 

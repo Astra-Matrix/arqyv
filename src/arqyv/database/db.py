@@ -99,6 +99,16 @@ class Database:
             result = await sess.execute(q)
             return list(result.scalars().all())
 
+    async def get_files_by_paths(self, paths: list[str]) -> list[MediaFile]:
+        """Fetch MediaFile records for a given list of paths (preserves order)."""
+        if not paths:
+            return []
+        async with self.session() as sess:
+            q = select(MediaFile).where(MediaFile.path.in_(paths))
+            result = await sess.execute(q)
+            records = {r.path: r for r in result.scalars().all()}
+        return [records[p] for p in paths if p in records]
+
     async def search_files(self, query: str, limit: int = 50) -> list[MediaFile]:
         """Simple LIKE-based full-text search (pre-semantic fallback)."""
         async with self.session() as sess:

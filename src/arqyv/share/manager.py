@@ -54,20 +54,18 @@ class ShareManager:
         max_downloads: int = 50,
         timeout_seconds: int = 7200,
         on_download: Callable[[str], None] | None = None,
+        on_progress: Callable[[int, int], None] | None = None,
     ) -> ShareSession:
         """Start serving a file and return the ShareSession with URL + QR."""
         if not path.exists():
             raise FileNotFoundError(path)
 
-        def _on_dl(ip: str) -> None:
-            if on_download:
-                on_download(ip)
-
         server = ShareServer(
             path=path,
             max_downloads=max_downloads,
             timeout_seconds=timeout_seconds,
-            on_download=_on_dl,
+            on_download=on_download,
+            on_progress=on_progress,
         )
         server.start()
 

@@ -86,14 +86,21 @@ class Application:
         log.info("All services initialized.")
 
     def _open_main_window(self) -> None:
-        from arqyv.ui.main_window import MainWindow
+        from PyQt6.QtCore import Qt, QTimer
+        from arqyv.ui.main_window  import MainWindow
+        from arqyv.ui.window_utils import center_window, bring_to_foreground
 
         window = MainWindow(
             config=self.config,
             events=self.events,
             services=self._services,
         )
+
+        center_window(window, self.config, self.qt_app)
+        window.setWindowState(Qt.WindowState.WindowNoState)
         window.show()
+
+        QTimer.singleShot(200, lambda: bring_to_foreground(window))
         self._services["main_window"] = window
 
         # Start the local API server after the window is open so services
