@@ -7,7 +7,7 @@ asyncio.run() or an event loop bridge (e.g. asyncio.get_event_loop()).
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +71,7 @@ class Database:
                     if hasattr(record, key):
                         setattr(record, key, value)
 
-                record.updated_at = datetime.utcnow()
+                record.updated_at = datetime.now(UTC).replace(tzinfo=None)
 
         return record
 
