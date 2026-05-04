@@ -1,10 +1,12 @@
 import Nav from "@/components/Nav";
 import Hero from "@/components/Hero";
+import Marquee from "@/components/Marquee";
 import Features from "@/components/Features";
-import Downloads from "@/components/Downloads";
 import HowItWorks from "@/components/HowItWorks";
-import GettingStarted from "@/components/GettingStarted";
+import TerminalShowcase from "@/components/TerminalShowcase";
+import Downloads from "@/components/Downloads";
 import SearchSyntax from "@/components/SearchSyntax";
+import GettingStarted from "@/components/GettingStarted";
 import FAQ from "@/components/FAQ";
 import Footer from "@/components/Footer";
 
@@ -14,8 +16,10 @@ export default function Home() {
       <Nav />
       <main>
         <Hero />
+        <Marquee />
         <Features />
         <HowItWorks />
+        <TerminalShowcase />
         <Downloads />
         <SearchSyntax />
         <GettingStarted />

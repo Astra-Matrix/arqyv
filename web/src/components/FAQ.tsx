@@ -1,89 +1,94 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus } from "lucide-react";
+import { useInView } from "@/hooks/useInView";
+import { ChevronDown } from "lucide-react";
 
-const FAQS = [
+const ITEMS = [
   {
-    q: "Is ARQYV really free? No subscription?",
-    a: "Completely free, forever. MIT licensed and open source. No ARQYV account, no cloud service, no telemetry. Build it yourself from source anytime.",
+    q: "Does ARQYV send any data to the internet?",
+    a: "No. ARQYV is entirely local. AI models run on your machine. No telemetry, no analytics, no cloud dependency of any kind. The only network traffic is LAN-based file sharing — and that's initiated by you.",
   },
   {
-    q: "Do I need VLC or FFmpeg installed?",
-    a: "No. ARQYV uses Qt Multimedia as the primary engine — platform-native codecs (Windows Media Foundation, AVFoundation, GStreamer). If you have VLC installed, ARQYV auto-detects it and upgrades to VLC's extended codec support (H.265, AV1, AC3, DTS…). Nothing to configure.",
+    q: "Do I need a GPU for AI features?",
+    a: "No. ARQYV's AI pipeline runs on CPU by default and is fully usable that way. A GPU (CUDA or Apple MPS) makes AI analysis 5–20× faster but is entirely optional. Set ARQYV_AI_DEVICE=cuda or mps to enable it.",
   },
   {
-    q: "Does AI analysis send my files to the cloud?",
-    a: "Never. Every AI model runs locally: Whisper for transcription, BLIP for captioning, sentence-transformers for embeddings, spaCy for NLP. No API keys required. No internet needed for any AI feature.",
+    q: "What happens if I don't install the AI packages?",
+    a: "ARQYV continues working perfectly as a media organizer, player, and LAN sharing tool. Live search still works (SQLite full-text fallback). Only semantic search and AI tagging are disabled. Install them anytime to unlock these features.",
   },
   {
     q: "How does P2P sharing work?",
-    a: "ARQYV starts a lightweight HTTP server bound to your local IP with a one-time token. The share URL is encoded as a QR code. Scan it on any device on the same network — download starts. The server auto-shuts down after transfer or when you close the dialog. Nothing goes through ARQYV servers — there are none.",
+    a: "When you share a file, ARQYV starts a temporary HTTP server on a random port. mDNS/Zeroconf broadcasts it to other ARQYV instances on the same LAN. Non-ARQYV devices can download via the QR-encoded URL. The server closes when you dismiss the share dialog.",
   },
   {
-    q: "What file formats are supported?",
-    a: "The format detector recognises 40+ formats via magic bytes. Actual playback depends on the active backend: Qt Multimedia covers all common formats; VLC (if installed) covers virtually everything including exotic containers and legacy codecs.",
-  },
-  {
-    q: "Can I use ARQYV with cloud storage?",
-    a: "Yes — Google Drive, OneDrive, and Dropbox via OAuth2. ARQYV never stores your credentials. Cloud sync is off by default; enable in Settings or set ARQYV_ENABLE_CLOUD_SYNC=true.",
+    q: "Can I use ARQYV with a NAS or external drive?",
+    a: "Yes. Add any mounted path as a watched folder — including network shares (SMB/NFS), external drives, or cloud-sync folders. ARQYV monitors them for changes automatically.",
   },
   {
     q: "Is there a mobile app?",
-    a: "A Flutter mobile scaffold is included. It connects to the local API server (localhost:8765) that ARQYV starts automatically. A full mobile client is on the roadmap.",
+    a: "A Flutter mobile companion app is planned for Phase 3. In the meantime, the local FastAPI server on port 8765 allows any device on your network to browse and stream your library via browser.",
   },
   {
-    q: "How do I report a bug?",
-    a: "Open an issue at github.com/ALaustrup/arqyv/issues. PRs are welcome — the codebase is modular with clear interfaces.",
+    q: "How do I extend ARQYV with custom functionality?",
+    a: "ARQYV has a plugin system based on Python entry-points. Create a package that subclasses MetadataPlugin, TaggerPlugin, or PostProcessPlugin, register it, and pip install it. ARQYV discovers it automatically at launch.",
+  },
+  {
+    q: "Is ARQYV free? Will it stay free?",
+    a: "ARQYV is MIT-licensed and completely free. There is no paid tier, no freemium model, and no plans to change that. It's a personal project open to community contributions.",
   },
 ];
 
 export default function FAQ() {
+  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.05 });
   const [open, setOpen] = useState<number | null>(null);
 
   return (
-    <section id="faq" className="section-sm">
+    <section id="faq" className="section relative" ref={ref}>
       <div className="max-w-3xl mx-auto">
 
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-widest text-[#00d2ff] mb-6"
-               style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}>
-            FAQ
-          </div>
-          <h2 className="text-5xl md:text-6xl font-black tracking-tight text-white">
-            Questions.
+        <div className={`text-center mb-16 reveal ${inView ? "in-view" : ""}`}>
+          <div className="label-pill inline-flex">FAQ</div>
+          <h2 className="text-4xl md:text-5xl font-black tracking-tight text-white mb-5">
+            Common questions.
           </h2>
         </div>
 
         <div className="space-y-2">
-          {FAQS.map((faq, i) => (
+          {ITEMS.map((item, i) => (
             <div
               key={i}
-              className="rounded-2xl overflow-hidden transition-all"
+              className={`reveal ${inView ? "in-view" : ""} rounded-2xl overflow-hidden transition-colors`}
               style={{
-                background: open === i ? "rgba(255,255,255,0.03)" : "rgba(255,255,255,0.015)",
-                border: open === i ? "1px solid rgba(0,210,255,0.15)" : "1px solid rgba(255,255,255,0.05)",
+                transitionDelay: `${i * 0.04}s`,
+                background: open === i ? "rgba(0,210,255,0.03)" : "rgba(255,255,255,0.018)",
+                border: `1px solid ${open === i ? "rgba(0,210,255,0.15)" : "rgba(255,255,255,0.055)"}`,
               }}
             >
               <button
+                className="w-full flex items-center justify-between text-left px-6 py-5 gap-4"
                 onClick={() => setOpen(open === i ? null : i)}
-                className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left group"
               >
-                <span className={`text-sm font-medium transition-colors ${open === i ? "text-white" : "text-white/50 group-hover:text-white/70"}`}>
-                  {faq.q}
-                </span>
-                <div className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center transition-all ${
-                  open === i ? "bg-[#00d2ff] text-black" : "bg-white/[0.06] text-white/30"
+                <span className={`font-semibold text-sm md:text-base leading-snug transition-colors ${
+                  open === i ? "text-white" : "text-white/70"
                 }`}>
-                  {open === i ? <Minus size={10} /> : <Plus size={10} />}
-                </div>
+                  {item.q}
+                </span>
+                <ChevronDown
+                  size={16}
+                  className={`shrink-0 text-white/30 transition-transform duration-300 ${
+                    open === i ? "rotate-180 text-[#00d2ff]" : ""
+                  }`}
+                />
               </button>
-              {open === i && (
-                <div className="px-6 pb-5 text-sm text-white/40 leading-relaxed"
-                     style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-                  <div className="pt-4">{faq.a}</div>
+              <div
+                className="overflow-hidden transition-all duration-300 ease-in-out"
+                style={{ maxHeight: open === i ? "400px" : "0" }}
+              >
+                <div className="px-6 pb-6 text-sm text-white/40 leading-relaxed">
+                  {item.a}
                 </div>
-              )}
+              </div>
             </div>
           ))}
         </div>

@@ -1,72 +1,107 @@
 "use client";
 
+import { useInView } from "@/hooks/useInView";
+
 const STEPS = [
-  { n: "01", title: "Open a folder",       desc: "Point ARQYV at any folder — local drive, external disk, or mounted cloud. Background indexer starts immediately, UI stays responsive." },
-  { n: "02", title: "AI reads everything", desc: "Videos → Whisper transcription. Images → BLIP captioning. Documents → text extraction. spaCy extracts keywords and entities." },
-  { n: "03", title: "Vectors stored locally", desc: "sentence-transformers embeds into 384-dim vectors. ChromaDB stores them. All semantic search runs offline in under 100ms." },
-  { n: "04", title: "Search by meaning",   desc: "Type 'beach vacation type:video' and get results ranked by semantic relevance, not just filename. Natural language meets precise filters." },
-  { n: "05", title: "Play anything",       desc: "Click a file. Magic-byte format detection, codec tier selection, subtitle auto-load, and position resume — all automatic." },
-  { n: "06", title: "Share instantly",     desc: "Select a file, click Share. QR code appears. Scan from any device on the same network — download starts. No upload, no cloud." },
+  {
+    n: "01",
+    title: "Add a folder",
+    desc: "Point ARQYV at any directory — your Downloads, a NAS, an external drive. The watcher stays active and picks up new files in real time.",
+    accent: "#00d2ff",
+    detail: "Supports recursive scanning of unlimited depth. Filters to 40+ supported extensions automatically.",
+  },
+  {
+    n: "02",
+    title: "ARQYV indexes & understands",
+    desc: "Every file is analyzed: metadata extracted, thumbnails generated, AI tags and summaries computed. All off the main thread, never blocking the UI.",
+    accent: "#7c3aed",
+    detail: "Whisper transcripts audio/video. BLIP captions images. Sentence-transformers embeds text into ChromaDB.",
+  },
+  {
+    n: "03",
+    title: "Search anything, instantly",
+    desc: "Type a word — or a sentence — and results appear before you finish. Semantic understanding, BM25 precision, and full-text search run in parallel.",
+    accent: "#00d2ff",
+    detail: "Filter with type:video, date:>2024, ext:.flac, size:>500mb. Combine freely.",
+  },
+  {
+    n: "04",
+    title: "Play, share, or organize",
+    desc: "Play any file directly in the built-in engine. Share via QR code over LAN. Auto-collections group your files intelligently — no manual tagging.",
+    accent: "#f97316",
+    detail: "P2P share uses mDNS discovery. No servers. Files stream directly between devices.",
+  },
 ];
 
 export default function HowItWorks() {
+  const { ref, inView } = useInView<HTMLDivElement>({ threshold: 0.05 });
+
   return (
-    <section className="section-sm relative">
-      {/* Gradient divider */}
-      <div className="absolute inset-x-0 top-0 h-px"
-           style={{ background: "linear-gradient(to right, transparent, rgba(0,210,255,0.15), transparent)" }} />
+    <section id="how" className="section relative" ref={ref}>
+      <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
+        <div className={`text-center mb-20 reveal ${inView ? "in-view" : ""}`}>
+          <div className="label-pill inline-flex">How it works</div>
+          <h2 className="text-5xl md:text-6xl font-black tracking-tight text-white mb-5">
+            Up and running<br />
+            <span className="text-white/22">in four steps.</span>
+          </h2>
+        </div>
 
-          {/* Left: heading */}
-          <div className="lg:sticky lg:top-32">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold uppercase tracking-widest text-[#00d2ff] mb-6"
-                 style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}>
-              The pipeline
-            </div>
-            <h2 className="text-5xl md:text-6xl font-black tracking-tight text-white leading-tight mb-6">
-              How ARQYV<br />
-              <span className="text-white/25">works.</span>
-            </h2>
-            <p className="text-white/40 text-lg leading-relaxed">
-              Every step happens locally, automatically, without you thinking about it.
-            </p>
-          </div>
+        <div className="relative">
+          {/* Vertical connector line */}
+          <div
+            className="absolute left-[27px] top-12 bottom-12 w-px hidden md:block"
+            style={{ background: "linear-gradient(to bottom, rgba(0,210,255,0.15), rgba(124,58,237,0.15), rgba(249,115,22,0.1))" }}
+          />
 
-          {/* Right: steps */}
-          <div className="space-y-3">
-            {STEPS.map((step) => (
-              <div
-                key={step.n}
-                className="group flex gap-5 p-5 rounded-2xl transition-all hover:bg-white/[0.02] cursor-default"
-                style={{ border: "1px solid transparent" }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "rgba(0,210,255,0.1)";
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.borderColor = "transparent";
-                }}
-              >
+          <div className="space-y-12">
+            {STEPS.map((step, i) => {
+              const delay = `${i * 0.1}s`;
+              return (
                 <div
-                  className="shrink-0 w-10 h-10 rounded-xl flex items-center justify-center font-mono text-xs font-bold text-[#00d2ff] mt-0.5 transition-all group-hover:scale-110"
-                  style={{ background: "rgba(0,210,255,0.06)", border: "1px solid rgba(0,210,255,0.12)" }}
+                  key={step.n}
+                  className={`reveal ${inView ? "in-view" : ""} flex gap-8 md:gap-12`}
+                  style={{ transitionDelay: delay }}
                 >
-                  {step.n}
+                  {/* Number circle */}
+                  <div className="shrink-0 flex flex-col items-center gap-3 mt-1">
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center text-sm font-black z-10"
+                      style={{
+                        background: `${step.accent}12`,
+                        border: `1px solid ${step.accent}28`,
+                        color: step.accent,
+                      }}
+                    >
+                      {step.n}
+                    </div>
+                  </div>
+
+                  {/* Content */}
+                  <div
+                    className="flex-1 rounded-2xl p-6 md:p-8 group hover:border-white/[0.1] transition-colors"
+                    style={{ background: "rgba(255,255,255,0.018)", border: "1px solid rgba(255,255,255,0.055)" }}
+                  >
+                    <h3 className="text-xl md:text-2xl font-bold text-white mb-3">{step.title}</h3>
+                    <p className="text-white/45 text-base leading-relaxed mb-4">{step.desc}</p>
+                    <div
+                      className="text-sm text-white/30 px-4 py-3 rounded-xl leading-relaxed"
+                      style={{
+                        background: `${step.accent}06`,
+                        border: `1px solid ${step.accent}12`,
+                        borderLeft: `3px solid ${step.accent}40`,
+                      }}
+                    >
+                      {step.detail}
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-white/90 mb-1.5">{step.title}</h3>
-                  <p className="text-white/35 text-sm leading-relaxed">{step.desc}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
-
-      {/* Gradient divider */}
-      <div className="absolute inset-x-0 bottom-0 h-px"
-           style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.04), transparent)" }} />
     </section>
   );
 }
