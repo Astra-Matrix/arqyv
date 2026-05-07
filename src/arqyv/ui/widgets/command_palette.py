@@ -139,22 +139,32 @@ class CommandPalette(QDialog):
         else:
             super().keyPressEvent(event)
 
+    def show_palette(self) -> None:
+        """Open the palette (used by toolbar button)."""
+        self._open()
+
     @staticmethod
-    def install(parent: QWidget, commands: list[Command]) -> "CommandPalette | None":
-        """Create a global Ctrl+P shortcut that opens the palette."""
-        shortcut = QShortcut(QKeySequence("Ctrl+P"), parent)
+    def install(parent: QWidget, commands: list[Command]) -> "CommandPalette":
+        """Create a global Ctrl+P shortcut that opens the palette.
+
+        Returns a proxy object with a `show_palette()` method for the toolbar button.
+        """
+        proxy = CommandPalette.__new__(CommandPalette)
+        proxy._commands = commands
+        proxy._parent = parent
 
         def _open() -> None:
             palette = CommandPalette(commands, parent)
-            # Center below toolbar
             geo = parent.geometry()
-            pw, ph = palette.sizeHint().width(), palette.sizeHint().height()
+            pw = palette.sizeHint().width()
             palette.move(geo.center().x() - pw // 2, geo.top() + 60)
             palette.show()
             palette._input.setFocus()
 
+        proxy._open = _open  # type: ignore[attr-defined]
+        shortcut = QShortcut(QKeySequence("Ctrl+P"), parent)
         shortcut.activated.connect(_open)
-        return None
+        return proxy  # type: ignore[return-value]
 
 
 class _CmdRow(QWidget):
