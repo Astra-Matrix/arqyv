@@ -1,12 +1,16 @@
 """
 ARQYV Empty State — shown in the content area when no file is selected.
 
-Adapts its message to the current sidebar context (library, search, collections…).
+Wraps a LiquidBackground so the content area is never just a flat void.
+The icon pulses slowly. CTA buttons have a shimmer on hover.
 """
 
 from __future__ import annotations
 
-from PyQt6.QtCore import Qt, QSize, pyqtSignal
+import math
+
+from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor, QPainter, QRadialGradient, QBrush
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
@@ -15,17 +19,73 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from arqyv.ui.effects.liquid_bg import LiquidBackground
+from arqyv.ui.effects.shimmer import ShimmerEffect
 from arqyv.ui.themes.dark import PALETTE as P
 
 
+# ── Pulsing icon label ─────────────────────────────────────────────────────────
+
+class _PulseIcon(QWidget):
+    """Draws a large glyph surrounded by a slow-breathing glow ring."""
+
+    def __init__(self, glyph: str, parent: QWidget | None = None) -> None:
+        super().__init__(parent)
+        self.setFixedSize(QSize(100, 100))
+        self._glyph = glyph
+        self._t     = 0
+        t = QTimer(self)
+        t.setInterval(30)
+        t.timeout.connect(self._tick)
+        t.start()
+
+    def _tick(self) -> None:
+        self._t += 1
+        self.update()
+
+    def set_glyph(self, g: str) -> None:
+        self._glyph = g
+        self.update()
+
+    def paintEvent(self, event: object) -> None:  # type: ignore[override]
+        cx, cy = self.width() / 2, self.height() / 2
+        # Pulse: radius oscillates ±8 px around 38 px
+        pulse = 38 + math.sin(self._t * 0.04) * 8
+        alpha = int((0.12 + math.sin(self._t * 0.04) * 0.06) * 255)
+
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        painter.setPen(Qt.PenStyle.NoPen)
+
+        # Glow ring
+        cr, cg, cb = 0, 212, 255   # cyan
+        grad = QRadialGradient(cx, cy, pulse * 1.5)
+        grad.setColorAt(0.0, QColor(cr, cg, cb, alpha))
+        grad.setColorAt(0.5, QColor(cr, cg, cb, alpha // 3))
+        grad.setColorAt(1.0, QColor(cr, cg, cb, 0))
+        painter.setBrush(QBrush(grad))
+        painter.drawEllipse(int(cx - pulse * 1.5), int(cy - pulse * 1.5),
+                            int(pulse * 3), int(pulse * 3))
+
+        # Icon text
+        from PyQt6.QtGui import QFont
+        f = QFont("Segoe UI", 30)
+        painter.setFont(f)
+        painter.setPen(QColor(P["text3"]))
+        painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self._glyph)
+        painter.end()
+
+
+# ── Main widget ────────────────────────────────────────────────────────────────
+
 class EmptyStateWidget(QWidget):
     """
-    Full-area placeholder shown when no content is loaded.
+    Full-area placeholder with liquid orb background and pulsing icon.
 
     Signals
     -------
-    open_folder_requested  — user clicked "Open Folder"
-    open_files_requested   — user clicked "Open Files"
+    open_folder_requested
+    open_files_requested
     """
 
     open_folder_requested = pyqtSignal()
@@ -40,12 +100,12 @@ class EmptyStateWidget(QWidget):
         "search": (
             "⌕",
             "Start typing to search",
-            "Search by filename, extension, or AI-generated content tags.",
+            "Search by filename, extension, or AI content tags.",
         ),
         "collections": (
             "⊟",
             "No collections yet",
-            "Collections are built automatically after your library is indexed.",
+            "Collections are built automatically after indexing.",
         ),
         "queue": (
             "≣",
@@ -62,15 +122,20 @@ class EmptyStateWidget(QWidget):
     def __init__(self, context: str = "library", parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._context = context
-        self.setStyleSheet(f"background: {P['bg0']};")
         self._build_ui()
 
     def _build_ui(self) -> None:
+        # Liquid orb background layer
+        self._bg = LiquidBackground(self, intensity=0.85)
+        self._bg.resize(self.size())
+        self._bg.lower()
+
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addStretch(2)
 
         center = QWidget()
+        center.setStyleSheet("background: transparent;")
         cl = QVBoxLayout(center)
         cl.setContentsMargins(40, 0, 40, 0)
         cl.setSpacing(0)
@@ -78,25 +143,25 @@ class EmptyStateWidget(QWidget):
 
         icon, title, body = self._CONTEXTS.get(self._context, self._CONTEXTS["default"])
 
-        # Icon glyph — large, faint
-        self._icon_lbl = QLabel(icon)
-        self._icon_lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        self._icon_lbl.setStyleSheet(f"""
-            color: {P['bg4']};
-            font-size: 64px;
-            font-weight: 300;
-            padding-bottom: 24px;
-        """)
-        cl.addWidget(self._icon_lbl)
+        # Pulsing icon
+        self._icon = _PulseIcon(icon)
+        icon_row = QWidget()
+        icon_row.setStyleSheet("background: transparent;")
+        ir = QHBoxLayout(icon_row)
+        ir.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        ir.addWidget(self._icon)
+        cl.addWidget(icon_row)
+        cl.addSpacing(20)
 
         # Title
         self._title_lbl = QLabel(title)
         self._title_lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self._title_lbl.setStyleSheet(f"""
+            background: transparent;
             color: {P['text']};
             font-size: 18px;
             font-weight: 600;
-            letter-spacing: -0.01em;
+            letter-spacing: -0.02em;
         """)
         cl.addWidget(self._title_lbl)
         cl.addSpacing(10)
@@ -106,17 +171,17 @@ class EmptyStateWidget(QWidget):
         self._body_lbl.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self._body_lbl.setWordWrap(True)
         self._body_lbl.setStyleSheet(f"""
+            background: transparent;
             color: {P['text2']};
             font-size: 13px;
-            line-height: 1.6;
-            max-width: 320px;
         """)
         cl.addWidget(self._body_lbl)
 
-        # Action buttons (only for library context)
+        # CTA buttons for library context
         if self._context == "library":
             cl.addSpacing(28)
             btn_row = QWidget()
+            btn_row.setStyleSheet("background: transparent;")
             bl = QHBoxLayout(btn_row)
             bl.setContentsMargins(0, 0, 0, 0)
             bl.setSpacing(10)
@@ -127,30 +192,34 @@ class EmptyStateWidget(QWidget):
             open_folder_btn.setFixedHeight(36)
             open_folder_btn.setMinimumWidth(140)
             open_folder_btn.clicked.connect(self.open_folder_requested)
+            ShimmerEffect.install(open_folder_btn, duration_ms=700)
 
             open_files_btn = QPushButton("Open Files…")
             open_files_btn.setFixedHeight(36)
             open_files_btn.setMinimumWidth(120)
             open_files_btn.clicked.connect(self.open_files_requested)
+            ShimmerEffect.install(open_files_btn)
 
             bl.addWidget(open_folder_btn)
             bl.addWidget(open_files_btn)
             cl.addWidget(btn_row)
 
-            # Keyboard shortcut hint
             cl.addSpacing(20)
             hint = QLabel("Or press  Ctrl+P  to open the command palette")
             hint.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-            hint.setStyleSheet(f"color: {P['text3']}; font-size: 11px;")
+            hint.setStyleSheet(f"background: transparent; color: {P['text3']}; font-size: 11px;")
             cl.addWidget(hint)
 
         outer.addWidget(center)
         outer.addStretch(3)
 
+    def resizeEvent(self, event: object) -> None:  # type: ignore[override]
+        self._bg.resize(self.size())
+        super().resizeEvent(event)  # type: ignore[arg-type]
+
     def set_context(self, context: str) -> None:
-        """Swap the displayed message without rebuilding the full widget."""
         self._context = context
         icon, title, body = self._CONTEXTS.get(context, self._CONTEXTS["default"])
-        self._icon_lbl.setText(icon)
+        self._icon.set_glyph(icon)
         self._title_lbl.setText(title)
         self._body_lbl.setText(body)
