@@ -17,22 +17,22 @@ from PyQt6.QtWidgets import QWidget
 
 P = {
     "bg0":       "#05050d",
-    "bg1":       "#0a0a14",
-    "bg2":       "#0f0f1c",
-    "bg3":       "#161624",
-    "bg4":       "#1e1e30",
+    "bg1":       "#090912",
+    "bg2":       "#0e0e1a",
+    "bg3":       "#141422",
+    "bg4":       "#1c1c2e",
     "cyan":      "#00d4ff",
     "cyan2":     "#00a8cc",
     "violet":    "#7c3aed",
     "violet2":   "#5b21b6",
-    "text":      "#eaeaf4",
-    "text2":     "#7878a0",
-    "text3":     "#3a3a58",
+    "text":      "#f0f0fb",   # brighter, crisper white
+    "text2":     "#9898be",   # more visible secondary
+    "text3":     "#48486a",   # tertiary — still subtle
     "success":   "#22c55e",
     "warning":   "#f59e0b",
     "error":     "#ef4444",
-    "border":    "#111120",
-    "border2":   "#191930",
+    "border":    "#0e0e1e",
+    "border2":   "#161628",
 }
 
 _QSS = f"""
@@ -42,9 +42,9 @@ _QSS = f"""
 QMainWindow, QDialog, QWidget {{
     background: {P['bg0']};
     color: {P['text']};
-    font-family: 'Segoe UI Variable', 'Segoe UI', 'Inter', 'SF Pro Text', sans-serif;
-    font-size: 13px;
-    line-height: 1.5;
+    font-family: 'Segoe UI Variable', 'Segoe UI', 'Inter', 'SF Pro Display', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.55;
 }}
 
 /* ── Menu ─────────────────────────────────────────────────── */
@@ -73,7 +73,7 @@ QMenu::item {{
     padding: 7px 20px 7px 12px;
     border-radius: 5px;
     color: {P['text2']};
-    font-size: 13px;
+    font-size: 13.5px;
 }}
 QMenu::item:selected {{
     background: {P['bg3']};
@@ -130,7 +130,7 @@ QTreeView, QListView, QListWidget, QTableView {{
     show-decoration-selected: 1;
 }}
 QTreeView::item, QListView::item, QListWidget::item {{
-    padding: 5px 8px;
+    padding: 6px 8px;
     border-radius: 5px;
     color: {P['text2']};
 }}
@@ -153,9 +153,9 @@ QHeaderView::section {{
     border: none;
     border-bottom: 1px solid {P['border2']};
     padding: 6px 10px;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.10em;
     text-transform: uppercase;
 }}
 QHeaderView::section:first {{ padding-left: 14px; }}
@@ -182,8 +182,8 @@ QPushButton {{
     border-radius: 7px;
     padding: 6px 14px;
     color: {P['text2']};
-    font-size: 13px;
-    font-weight: 500;
+    font-size: 13.5px;
+    font-weight: 400;
     min-height: 28px;
 }}
 QPushButton:hover {{
@@ -310,13 +310,13 @@ QTabBar::tab {{
     border-bottom: 2px solid transparent;
     padding: 9px 18px;
     color: {P['text2']};
-    font-size: 12px;
+    font-size: 13px;
     margin-right: 2px;
 }}
 QTabBar::tab:selected {{
     color: {P['cyan']};
     border-bottom: 2px solid {P['cyan']};
-    font-weight: 600;
+    font-weight: 500;
 }}
 QTabBar::tab:hover:!selected {{
     color: {P['text']};

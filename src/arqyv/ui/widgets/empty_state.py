@@ -49,27 +49,24 @@ class _PulseIcon(QWidget):
 
     def paintEvent(self, event: object) -> None:  # type: ignore[override]
         cx, cy = self.width() / 2, self.height() / 2
-        # Pulse: radius oscillates ±8 px around 38 px
-        pulse = 38 + math.sin(self._t * 0.04) * 8
-        alpha = int((0.12 + math.sin(self._t * 0.04) * 0.06) * 255)
+        # Very subtle breath: ±3 px radius, very low alpha — just enough to
+        # hint that the icon is alive without calling attention to itself.
+        pulse = 30 + math.sin(self._t * 0.025) * 3
+        alpha = int((0.055 + math.sin(self._t * 0.025) * 0.02) * 255)
 
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setPen(Qt.PenStyle.NoPen)
 
-        # Glow ring
-        cr, cg, cb = 0, 212, 255   # cyan
-        grad = QRadialGradient(cx, cy, pulse * 1.5)
-        grad.setColorAt(0.0, QColor(cr, cg, cb, alpha))
-        grad.setColorAt(0.5, QColor(cr, cg, cb, alpha // 3))
-        grad.setColorAt(1.0, QColor(cr, cg, cb, 0))
+        grad = QRadialGradient(cx, cy, pulse * 2.0)
+        grad.setColorAt(0.0, QColor(0, 212, 255, alpha))
+        grad.setColorAt(1.0, QColor(0, 212, 255, 0))
         painter.setBrush(QBrush(grad))
-        painter.drawEllipse(int(cx - pulse * 1.5), int(cy - pulse * 1.5),
-                            int(pulse * 3), int(pulse * 3))
+        painter.drawEllipse(int(cx - pulse * 2), int(cy - pulse * 2),
+                            int(pulse * 4), int(pulse * 4))
 
-        # Icon text
         from PyQt6.QtGui import QFont
-        f = QFont("Segoe UI", 30)
+        f = QFont("Segoe UI", 28)
         painter.setFont(f)
         painter.setPen(QColor(P["text3"]))
         painter.drawText(self.rect(), Qt.AlignmentFlag.AlignCenter, self._glyph)
@@ -126,7 +123,7 @@ class EmptyStateWidget(QWidget):
 
     def _build_ui(self) -> None:
         # Liquid orb background layer
-        self._bg = LiquidBackground(self, intensity=0.85)
+        self._bg = LiquidBackground(self, intensity=0.45)
         self._bg.resize(self.size())
         self._bg.lower()
 

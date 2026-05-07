@@ -36,17 +36,15 @@ from arqyv.ui.themes.dark import PALETTE as P
 # The orbs are deliberately slow so they feel like liquid, not animation.
 
 _ORB_DEFS: list[tuple] = [
-    # cx    cy    r     fx       fy       px   py   colour              a
-    (0.15,  0.20, 0.55, 0.00025, 0.00018, 0.0, 1.2, P["cyan"],         18),
-    (0.85,  0.75, 0.48, 0.00019, 0.00027, 2.4, 0.5, P["violet"],       15),
-    (0.50,  0.05, 0.38, 0.00033, 0.00021, 1.1, 3.0, "#00a8cc",         12),
-    (0.08,  0.85, 0.32, 0.00022, 0.00035, 3.5, 0.8, P["violet2"],      14),
-    (0.75,  0.15, 0.28, 0.00041, 0.00016, 0.7, 2.1, P["cyan"],         10),
-    (0.40,  0.90, 0.25, 0.00030, 0.00042, 1.9, 1.5, "#1a0040",         20),
+    # cx    cy    r     fx       fy       px   py   colour          a  (max alpha)
+    (0.15,  0.20, 0.40, 0.00018, 0.00013, 0.0, 1.2, P["cyan"],      8),
+    (0.85,  0.78, 0.35, 0.00013, 0.00019, 2.4, 0.5, P["violet"],    7),
+    (0.55,  0.08, 0.28, 0.00022, 0.00015, 1.1, 3.0, "#00a8cc",      5),
+    (0.10,  0.88, 0.24, 0.00016, 0.00024, 3.5, 0.8, P["violet2"],   6),
 ]
 
-_TICK_MS    = 33       # ~30 fps for background (lighter than particle overlay)
-_AMPLITUDE  = 0.14     # how far each orb drifts from its base position (0–1)
+_TICK_MS    = 40       # ~25 fps — imperceptibly slow is the goal
+_AMPLITUDE  = 0.08     # tight drift — just enough to feel alive
 
 
 def _hex_to_rgb(h: str) -> tuple[int, int, int]:
@@ -124,7 +122,7 @@ class LiquidBackground(QWidget):
 
             grad = QRadialGradient(QPointF(x, y), r)
             grad.setColorAt(0.0,  QColor(cr, cg, cb, a))
-            grad.setColorAt(0.45, QColor(cr, cg, cb, int(a * 0.35)))
+            grad.setColorAt(0.30, QColor(cr, cg, cb, int(a * 0.25)))
             grad.setColorAt(1.0,  QColor(cr, cg, cb, 0))
 
             painter.setBrush(QBrush(grad))

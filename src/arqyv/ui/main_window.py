@@ -36,7 +36,6 @@ from PyQt6.QtWidgets import (
 
 from arqyv.config import AppConfig
 from arqyv.core.events import EventBus, Events
-from arqyv.ui.effects.particle_overlay import ParticleOverlay
 from arqyv.ui.effects.shimmer import ShimmerEffect
 from arqyv.ui.themes.dark import apply_dark_theme, PALETTE as DARK_P
 from arqyv.ui.widgets.empty_state import EmptyStateWidget
@@ -480,32 +479,10 @@ class MainWindow(QMainWindow):
     # ── Visual effects ─────────────────────────────────────────────────────
 
     def _install_effects(self) -> None:
-        """Attach particle overlay + shimmer effects after UI is built."""
-        # Full-window particle overlay — must be a child of the central widget
-        # so it doesn't interfere with the toolbar or status bar hit-testing.
-        central = self.centralWidget()
-        if central:
-            self._particles = ParticleOverlay(central)
-            central.setMouseTracking(True)
-            # Propagate mouse tracking to children so mouseMoveEvent fires
-            for child in central.findChildren(QWidget):
-                child.setMouseTracking(True)
-
-        # Shimmer on the three header action buttons
+        """Attach shimmer sweep to all ghost-style toolbar buttons."""
         for child in self.findChildren(QWidget):
-            name = child.objectName()
-            if name == "ghost":
-                ShimmerEffect.install(child, duration_ms=600)
-
-    def mouseMoveEvent(self, event: Any) -> None:  # type: ignore[override]
-        """Feed cursor position to the particle system."""
-        if hasattr(self, "_particles"):
-            # Map from window coords to central widget coords
-            central = self.centralWidget()
-            if central:
-                pos = central.mapFromGlobal(self.mapToGlobal(event.pos()))
-                self._particles.feed(float(pos.x()), float(pos.y()))
-        super().mouseMoveEvent(event)
+            if child.objectName() == "ghost":
+                ShimmerEffect.install(child, duration_ms=700)
 
     def closeEvent(self, event: Any) -> None:  # type: ignore[override]
         if self._share_manager:

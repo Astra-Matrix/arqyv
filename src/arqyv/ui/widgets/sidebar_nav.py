@@ -8,10 +8,7 @@ glow ring behind the icon. Hover items get a shimmer sweep.
 
 from __future__ import annotations
 
-import math
-
-from PyQt6.QtCore import Qt, QSize, QTimer, pyqtSignal
-from PyQt6.QtGui import QBrush, QColor, QPainter, QRadialGradient
+from PyQt6.QtCore import Qt, QSize, pyqtSignal
 from PyQt6.QtWidgets import (
     QFrame,
     QPushButton,
@@ -21,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from arqyv.ui.effects.shimmer import ShimmerEffect
+
 from arqyv.ui.themes.dark import PALETTE as P
 
 _W   = 48   # strip width px
@@ -33,44 +31,26 @@ class _NavButton(QPushButton):
     """
     Single icon button in the nav strip.
 
-    When active, a slow-breathing radial glow ring is painted behind the icon.
+    Active state: left cyan accent bar + slightly brighter bg.
+    Hover: smooth background fill via QSS + shimmer sweep.
+    No custom paintEvent — relies entirely on QSS transitions.
     """
 
     def __init__(self, icon: str, tip: str, key: str) -> None:
         super().__init__(icon)
-        self.key      = key
-        self._active  = False
-        self._t       = 0
-        self._shimmer = ShimmerEffect.install(self, duration_ms=500, cooldown_ms=600)
-
+        self.key     = key
+        self._active = False
+        ShimmerEffect.install(self, duration_ms=550, cooldown_ms=700)
         self.setFixedSize(QSize(_W, _BTN))
         self.setToolTip(tip)
         self.setCheckable(False)
-
-        self._glow_timer = QTimer(self)
-        self._glow_timer.setInterval(30)
-        self._glow_timer.timeout.connect(self._pulse)
         self._refresh()
-
-    # ── Active state ───────────────────────────────────────────────────────
 
     def set_active(self, active: bool) -> None:
         if self._active == active:
             return
         self._active = active
-        if active:
-            self._glow_timer.start()
-        else:
-            self._glow_timer.stop()
-            self._t = 0
-        self.update()
         self._refresh()
-
-    def _pulse(self) -> None:
-        self._t += 1
-        self.update()
-
-    # ── Style ──────────────────────────────────────────────────────────────
 
     def _refresh(self) -> None:
         if self._active:
@@ -100,34 +80,6 @@ class _NavButton(QPushButton):
                     color: {P['text2']};
                 }}
             """)
-
-    # ── Painting — glow ring ───────────────────────────────────────────────
-
-    def paintEvent(self, event: object) -> None:  # type: ignore[override]
-        if self._active:
-            painter = QPainter(self)
-            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-            painter.setPen(Qt.PenStyle.NoPen)
-
-            cx  = self.width() / 2
-            cy  = self.height() / 2
-            # Breathing radius: 14–22 px
-            r   = 14 + math.sin(self._t * 0.05) * 4
-            a   = int((0.15 + math.sin(self._t * 0.05) * 0.06) * 255)
-
-            grad = QRadialGradient(cx, cy, r * 1.8)
-            grad.setColorAt(0.0, QColor(0, 212, 255, a))
-            grad.setColorAt(0.6, QColor(0, 212, 255, a // 3))
-            grad.setColorAt(1.0, QColor(0, 212, 255, 0))
-            painter.setBrush(QBrush(grad))
-            painter.drawEllipse(
-                int(cx - r * 1.8), int(cy - r * 1.8),
-                int(r * 3.6),      int(r * 3.6),
-            )
-            painter.end()
-
-        # Let Qt draw the text/label on top
-        super().paintEvent(event)  # type: ignore[arg-type]
 
 
 # ── Strip widget ───────────────────────────────────────────────────────────────

@@ -81,9 +81,9 @@ class _ShimmerOverlay(QWidget):
         x1 = cx + half_w
         grad = QLinearGradient(QPointF(x0, 0), QPointF(x1, h * 0.6))
         grad.setColorAt(0.0,  QColor(255, 255, 255, 0))
-        grad.setColorAt(0.35, QColor(255, 255, 255, 28))
-        grad.setColorAt(0.50, QColor(255, 255, 255, 52))
-        grad.setColorAt(0.65, QColor(255, 255, 255, 28))
+        grad.setColorAt(0.35, QColor(255, 255, 255, 14))
+        grad.setColorAt(0.50, QColor(255, 255, 255, 26))
+        grad.setColorAt(0.65, QColor(255, 255, 255, 14))
         grad.setColorAt(1.0,  QColor(255, 255, 255, 0))
 
         painter = QPainter(self)
